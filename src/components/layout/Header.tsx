@@ -1,6 +1,7 @@
 import { Search, Settings, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Link } from "react-router-dom";
 
 export function Header() {
   return (
@@ -31,10 +32,12 @@ export function Header() {
 
           {/* User Actions */}
           <div className="flex items-center space-x-2">
-            <Button variant="secondary" size="sm">
-              <User className="h-4 w-4 mr-2" />
-              Login
-            </Button>
+            <Link to="/auth">
+              <Button variant="secondary" size="sm">
+                <User className="h-4 w-4 mr-2" />
+                Login
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
