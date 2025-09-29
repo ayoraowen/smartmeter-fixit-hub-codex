@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Search, Book, Clock, Star, ChevronRight } from "lucide-react";
+import { Search, Book, Clock, Star, ChevronRight, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/Layout";
+import { Link } from "react-router-dom";
 
 export default function Guides() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -100,9 +101,17 @@ export default function Guides() {
     <Layout>
       <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <div className="flex items-center space-x-3 mb-4">
-          <Book className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold text-foreground">Troubleshooting Guides</h1>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <Book className="h-8 w-8 text-primary" />
+            <h1 className="text-3xl font-bold text-foreground">Troubleshooting Guides</h1>
+          </div>
+          <Link to="/guides/create">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Guide
+            </Button>
+          </Link>
         </div>
         <p className="text-lg text-muted-foreground">Expert-verified step-by-step solutions</p>
       </div>

@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Directory from "./pages/Directory";
 import ErrorCodes from "./pages/ErrorCodes";
 import Guides from "./pages/Guides";
+import CreateGuide from "./pages/CreateGuide";
 import Community from "./pages/Community";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/directory" element={<Directory />} />
           <Route path="/error-codes" element={<ErrorCodes />} />
           <Route path="/guides" element={<Guides />} />
+          <Route path="/guides/create" element={<CreateGuide />} />
           <Route path="/community" element={<Community />} />
           <Route path="/auth" element={<Auth />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
