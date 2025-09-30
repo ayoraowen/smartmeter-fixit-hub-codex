@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { Search, Filter, Grid3X3 } from "lucide-react";
+import { Search, Filter, Grid3X3, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Layout } from "@/components/layout/Layout";
 import { meterData } from "@/data/meterData";
+import { useNavigate } from "react-router-dom";
 
 export default function Directory() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedBrand, setSelectedBrand] = useState("all");
 
@@ -25,9 +27,15 @@ export default function Directory() {
     <Layout>
       <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <div className="flex items-center space-x-3 mb-4">
-          <Grid3X3 className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold text-foreground">Meter Directory</h1>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <Grid3X3 className="h-8 w-8 text-primary" />
+            <h1 className="text-3xl font-bold text-foreground">Meter Directory</h1>
+          </div>
+          <Button onClick={() => navigate("/directory/create")}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Meter
+          </Button>
         </div>
         <p className="text-lg text-muted-foreground">Browse smart meters by brand and model</p>
       </div>

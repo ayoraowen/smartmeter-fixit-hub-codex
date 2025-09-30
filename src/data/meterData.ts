@@ -8,7 +8,7 @@ export interface Meter {
   guides: number;
 }
 
-export const meterData: Meter[] = [
+const defaultMeterData: Meter[] = [
   {
     id: 1,
     brand: "Schneider Electric",
@@ -65,10 +65,20 @@ export const meterData: Meter[] = [
   }
 ];
 
+// Get all meters including custom ones from localStorage
+export const getAllMeters = (): Meter[] => {
+  const customMeters = JSON.parse(localStorage.getItem("customMeters") || "[]");
+  return [...defaultMeterData, ...customMeters];
+};
+
+export const meterData = getAllMeters();
+
 export const getMeterBrands = () => {
-  return Array.from(new Set(meterData.map(meter => meter.brand)));
+  const allMeters = getAllMeters();
+  return Array.from(new Set(allMeters.map(meter => meter.brand)));
 };
 
 export const getMeterTypes = () => {
-  return Array.from(new Set(meterData.map(meter => meter.type)));
+  const allMeters = getAllMeters();
+  return Array.from(new Set(allMeters.map(meter => meter.type)));
 };
