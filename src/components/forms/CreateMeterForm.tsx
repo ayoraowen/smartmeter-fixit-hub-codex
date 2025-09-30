@@ -19,8 +19,6 @@ const createMeterSchema = z.object({
   model: z.string().min(1, "Model is required").max(100),
   type: z.string().min(1, "Type is required").max(100),
   features: z.string().min(1, "At least one feature is required"),
-  commonIssues: z.string().min(1, "Number of common issues is required"),
-  guides: z.string().min(1, "Number of guides is required"),
 });
 
 export function CreateMeterForm() {
@@ -34,8 +32,6 @@ export function CreateMeterForm() {
       model: "",
       type: "",
       features: "",
-      commonIssues: "",
-      guides: "",
     },
   });
 
@@ -50,8 +46,8 @@ export function CreateMeterForm() {
       model: values.model,
       type: values.type,
       features: values.features.split(",").map(f => f.trim()),
-      commonIssues: parseInt(values.commonIssues),
-      guides: parseInt(values.guides),
+      commonIssues: 0,
+      guides: 0,
     };
 
     // Add to existing meters
@@ -120,34 +116,6 @@ export function CreateMeterForm() {
               <FormLabel>Features (comma-separated)</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., 3-Phase, CT/PT, Ethernet" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="commonIssues"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Number of Common Issues</FormLabel>
-              <FormControl>
-                <Input type="number" placeholder="e.g., 12" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="guides"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Number of Guides</FormLabel>
-              <FormControl>
-                <Input type="number" placeholder="e.g., 8" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
