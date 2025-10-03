@@ -1,9 +1,12 @@
-import { Search, Settings, User } from "lucide-react";
+import { Search, Settings, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function Header() {
+  const { user, logout } = useAuth();
+
   return (
     <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">
@@ -32,12 +35,24 @@ export function Header() {
 
           {/* User Actions */}
           <div className="flex items-center space-x-2">
-            <Link to="/auth">
-              <Button variant="secondary" size="sm">
-                <User className="h-4 w-4 mr-2" />
-                Login
-              </Button>
-            </Link>
+            {user ? (
+              <>
+                <span className="text-sm text-muted-foreground mr-2">
+                  {user.name}
+                </span>
+                <Button variant="secondary" size="sm" onClick={logout}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <Link to="/auth">
+                <Button variant="secondary" size="sm">
+                  <User className="h-4 w-4 mr-2" />
+                  Login
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>

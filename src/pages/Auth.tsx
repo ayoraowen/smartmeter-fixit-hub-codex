@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,11 +32,20 @@ type LoginFormData = z.infer<typeof loginSchema>;
 type SignupFormData = z.infer<typeof signupSchema>;
 
 const Auth = () => {
+  const { user, login, signup } = useAuth();
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -60,9 +70,7 @@ const Auth = () => {
     setError(null);
     
     try {
-      // TODO: Implement actual login logic when backend is ready
-      console.log("Login attempt:", { email: data.email });
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      await login(data.email, data.password);
       setSuccess("Login successful! Redirecting...");
     } catch (err) {
       setError("Invalid email or password. Please try again.");
@@ -76,10 +84,8 @@ const Auth = () => {
     setError(null);
     
     try {
-      // TODO: Implement actual signup logic when backend is ready
-      console.log("Signup attempt:", { email: data.email, name: data.name });
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      setSuccess("Account created successfully! Please check your email to verify your account.");
+      await signup(data.email, data.password, data.name);
+      setSuccess("Account created successfully! Redirecting...");
     } catch (err) {
       setError("Failed to create account. Please try again.");
     } finally {
