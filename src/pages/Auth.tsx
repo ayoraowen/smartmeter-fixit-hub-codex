@@ -84,6 +84,28 @@ const Auth = () => {
     setError(null);
     
     try {
+      // TODO: Replace with actual REST API call
+      // Example implementation:
+      // const response = await fetch('/api/auth/signup', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     email: data.email,
+      //     password: data.password,
+      //     name: data.name,
+      //   }),
+      // });
+      //
+      // if (!response.ok) {
+      //   const error = await response.json();
+      //   throw new Error(error.message || 'Signup failed');
+      // }
+      //
+      // const userData = await response.json();
+      // Store token or session data as needed
+      
       await signup(data.email, data.password, data.name);
       setSuccess("Account created successfully! Redirecting...");
     } catch (err) {
