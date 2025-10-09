@@ -88,28 +88,28 @@ const Auth = () => {
     try {
       // TODO: Replace with actual REST API call
       // Example implementation:
-      // const response = await fetch('/api/auth/signup', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     user: {
-      //       first_name: data.firstName,
-      //       last_name: data.lastName,
-      //       email: data.email,
-      //       password: data.password,
-      //       password_confirmation: data.confirmPassword,
-      //     }
-      //   }),
-      // });
-      //
-      // if (!response.ok) {
-      //   const error = await response.json();
-      //   throw new Error(error.message || 'Signup failed');
-      // }
-      //
-      // const userData = await response.json();
+      const response = await fetch('http://localhost:3000/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user: {
+            first_name: data.firstName,
+            last_name: data.lastName,
+            email: data.email,
+            password: data.password,
+            password_confirmation: data.confirmPassword,
+          }
+        }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Signup failed');
+      }
+      
+      const userData = await response.json();
       // Store token or session data as needed
       
       await signup(data.email, data.password, data.firstName, data.lastName);
