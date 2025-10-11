@@ -72,6 +72,29 @@ const Auth = () => {
     setError(null);
     
     try {
+      // TODO: Replace with actual REST API call
+      // Example implementation:
+      // const response = await fetch('http://localhost:3000/users/sign_in', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     user: {
+      //       email: data.email,
+      //       password: data.password,
+      //     }
+      //   }),
+      // });
+      //
+      // if (!response.ok) {
+      //   const error = await response.json();
+      //   throw new Error(error.message || 'Login failed');
+      // }
+      //
+      // const userData = await response.json();
+      // Store token or session data as needed
+      
       await login(data.email, data.password);
       setSuccess("Login successful! Redirecting...");
     } catch (err) {
