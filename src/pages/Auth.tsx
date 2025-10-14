@@ -74,29 +74,17 @@ const Auth = () => {
     try {
       // TODO: Replace with actual REST API call
       // Example implementation:
-<<<<<<< HEAD
       const response = await fetch('http://localhost:3000/login', {
-=======
-      /*
-      const response = await fetch('https://your-api.com/api/auth/login', {
->>>>>>> 6239ad78524cfe71827c4601e21e81369b1e7e8c
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-<<<<<<< HEAD
         body: JSON.stringify(
           {
             email: data.email,
             password: data.password,
           }
         ),
-=======
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-        }),
->>>>>>> 6239ad78524cfe71827c4601e21e81369b1e7e8c
       });
       
       if (!response.ok) {
@@ -116,10 +104,10 @@ const Auth = () => {
       
       // Update auth context with user data including first name
       await login(userData.email, userData.first_name, userData.last_name);
-      */
+      
       
       // Temporary mock implementation - remove when API is ready
-      await login(data.email, "User", "");
+      //await login(data.email, "User", "");
       setSuccess("Login successful! Redirecting...");
     } catch (err) {
       setError("Invalid email or password. Please try again.");
