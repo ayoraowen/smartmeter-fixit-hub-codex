@@ -91,8 +91,10 @@ const Auth = () => {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Login failed');
       }
+
+      const authData = await response.json();
       
-      const userData = await response.json();
+      const userData = authData.user;
       //const { user: userData, token } = await response.json();
       // Expected response format:
       // {
