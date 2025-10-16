@@ -35,11 +35,61 @@ export function CreateMeterForm() {
     },
   });
 
-  const onSubmit = (values: z.infer<typeof createMeterSchema>) => {
-    // Get existing meters from localStorage
+  const onSubmit = async (values: z.infer<typeof createMeterSchema>) => {
+    // API Implementation (commented out - replace localStorage when backend is ready)
+    /*
+    try {
+      const response = await fetch('https://your-api.com/api/meters', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+        body: JSON.stringify({
+          brand: values.brand,
+          model: values.model,
+          type: values.type,
+          features: values.features.split(",").map(f => f.trim()),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create meter');
+      }
+
+      const newMeter = await response.json();
+      // Expected response format:
+      // {
+      //   id: number,
+      //   brand: string,
+      //   model: string,
+      //   type: string,
+      //   features: string[],
+      //   commonIssues: number,
+      //   guides: number,
+      //   createdAt: string
+      // }
+
+      toast({
+        title: "Meter added successfully",
+        description: `${newMeter.brand} ${newMeter.model} has been added to the directory.`,
+      });
+
+      form.reset();
+      navigate("/directory");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create meter",
+        variant: "destructive",
+      });
+    }
+    */
+
+    // Current localStorage implementation
     const existingMeters = JSON.parse(localStorage.getItem("customMeters") || "[]");
     
-    // Create new meter object
     const newMeter = {
       id: Date.now(),
       brand: values.brand,
@@ -50,7 +100,6 @@ export function CreateMeterForm() {
       guides: 0,
     };
 
-    // Add to existing meters
     const updatedMeters = [...existingMeters, newMeter];
     localStorage.setItem("customMeters", JSON.stringify(updatedMeters));
 
