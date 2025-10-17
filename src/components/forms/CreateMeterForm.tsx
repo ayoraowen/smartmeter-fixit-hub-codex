@@ -37,18 +37,19 @@ export function CreateMeterForm() {
 
   const onSubmit = async (values: z.infer<typeof createMeterSchema>) => {
     // API Implementation (commented out - replace localStorage when backend is ready)
-    /*
+    
     try {
-      const response = await fetch('https://your-api.com/api/meters', {
+      const response = await fetch('https://localhost:3000/meters', {
         method: 'POST',
+        credentials: "include", // 👈 sends the session cookie
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          // 'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         },
         body: JSON.stringify({
           brand: values.brand,
           model: values.model,
-          type: values.type,
+          connection_type: values.type,
           features: values.features.split(",").map(f => f.trim()),
         }),
       });
@@ -85,23 +86,23 @@ export function CreateMeterForm() {
         variant: "destructive",
       });
     }
-    */
+    
 
     // Current localStorage implementation
-    const existingMeters = JSON.parse(localStorage.getItem("customMeters") || "[]");
+    // const existingMeters = JSON.parse(localStorage.getItem("customMeters") || "[]");
     
-    const newMeter = {
-      id: Date.now(),
-      brand: values.brand,
-      model: values.model,
-      type: values.type,
-      features: values.features.split(",").map(f => f.trim()),
-      commonIssues: 0,
-      guides: 0,
-    };
+    // const newMeter = {
+    //   id: Date.now(),
+    //   brand: values.brand,
+    //   model: values.model,
+    //   type: values.type,
+    //   features: values.features.split(",").map(f => f.trim()),
+    //   commonIssues: 0,
+    //   guides: 0,
+    // };
 
-    const updatedMeters = [...existingMeters, newMeter];
-    localStorage.setItem("customMeters", JSON.stringify(updatedMeters));
+    // const updatedMeters = [...existingMeters, newMeter];
+    // localStorage.setItem("customMeters", JSON.stringify(updatedMeters));
 
     toast({
       title: "Meter added successfully",

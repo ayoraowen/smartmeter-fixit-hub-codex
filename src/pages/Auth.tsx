@@ -74,8 +74,9 @@ const Auth = () => {
     try {
       // TODO: Replace with actual REST API call
       // Example implementation:
-      const response = await fetch('http://localhost:3000/login', {
+      const response = await fetch('https://localhost:3000/login', {
         method: 'POST',
+        credentials: "include", // <---- VERY IMPORTANT
         headers: {
           'Content-Type': 'application/json',
         },
@@ -126,8 +127,9 @@ const Auth = () => {
     try {
       // TODO: Replace with actual REST API call
       // Example implementation:
-      const response = await fetch('http://localhost:3000/users', {
+      const response = await fetch('https://localhost:3000/users', {
         method: 'POST',
+        credentials: "include", // <---- VERY IMPORTANT
         headers: {
           'Content-Type': 'application/json',
         },
