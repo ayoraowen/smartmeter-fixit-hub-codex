@@ -42,8 +42,8 @@ export function CreateMeterForm() {
   });
 
   // Debounced search function to find similar meters in backend
-  // const searchSimilarMeters = async (brand: string, model: string) => {
-  //   if (!brand && !model) {
+  // const searchSimilarMeters = async (brand: string, model: string, type: string, features: string) => {
+  //   if (!brand && !model && !type && !features) {
   //     setSearchResults([]);
   //     return;
   //   }
@@ -53,6 +53,8 @@ export function CreateMeterForm() {
   //     const params = new URLSearchParams();
   //     if (brand) params.append('brand', brand);
   //     if (model) params.append('model', model);
+  //     if (type) params.append('type', type);
+  //     if (features) params.append('features', features);
   //
   //     const response = await fetch(`https://localhost:3000/meters/search?${params.toString()}`, {
   //       method: 'GET',
@@ -90,7 +92,7 @@ export function CreateMeterForm() {
   // Watch form fields and trigger search with debounce
   // useEffect(() => {
   //   const subscription = form.watch((value, { name }) => {
-  //     if (name === 'brand' || name === 'model') {
+  //     if (name === 'brand' || name === 'model' || name === 'type' || name === 'features') {
   //       // Clear existing timeout
   //       if (searchTimeout) {
   //         clearTimeout(searchTimeout);
@@ -98,7 +100,12 @@ export function CreateMeterForm() {
   //       
   //       // Set new timeout for debounced search (500ms delay)
   //       const timeout = setTimeout(() => {
-  //         searchSimilarMeters(value.brand || '', value.model || '');
+  //         searchSimilarMeters(
+  //           value.brand || '', 
+  //           value.model || '', 
+  //           value.type || '', 
+  //           value.features || ''
+  //         );
   //       }, 500);
   //       
   //       setSearchTimeout(timeout);
