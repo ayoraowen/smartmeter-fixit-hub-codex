@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+// import { useState, useEffect } from "react"; // Uncomment when enabling search
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -25,6 +26,11 @@ export function CreateMeterForm() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Backend search implementation (commented out - enable when backend is ready)
+  // const [searchResults, setSearchResults] = useState<any[]>([]);
+  // const [isSearching, setIsSearching] = useState(false);
+  // const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+
   const form = useForm<z.infer<typeof createMeterSchema>>({
     resolver: zodResolver(createMeterSchema),
     defaultValues: {
@@ -34,6 +40,80 @@ export function CreateMeterForm() {
       features: "",
     },
   });
+
+  // Debounced search function to find similar meters in backend
+  // const searchSimilarMeters = async (brand: string, model: string, type: string, features: string) => {
+  //   if (!brand && !model && !type && !features) {
+  //     setSearchResults([]);
+  //     return;
+  //   }
+  //
+  //   setIsSearching(true);
+  //   try {
+  //     const params = new URLSearchParams();
+  //     if (brand) params.append('brand', brand);
+  //     if (model) params.append('model', model);
+  //     if (type) params.append('type', type);
+  //     if (features) params.append('features', features);
+  //
+  //     const response = await fetch(`https://localhost:3000/meters/search?${params.toString()}`, {
+  //       method: 'GET',
+  //       credentials: "include",
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //     });
+  //
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       setSearchResults(data);
+  //       
+  //       // Check for duplicates and warn user
+  //       const exactMatch = data.find((meter: any) => 
+  //         meter.brand.toLowerCase() === brand.toLowerCase() && 
+  //         meter.model.toLowerCase() === model.toLowerCase()
+  //       );
+  //       
+  //       if (exactMatch) {
+  //         toast({
+  //           title: "Duplicate meter found",
+  //           description: `${exactMatch.brand} ${exactMatch.model} already exists in the directory.`,
+  //           variant: "destructive",
+  //         });
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error('Search error:', error);
+  //   } finally {
+  //     setIsSearching(false);
+  //   }
+  // };
+
+  // Watch form fields and trigger search with debounce
+  // useEffect(() => {
+  //   const subscription = form.watch((value, { name }) => {
+  //     if (name === 'brand' || name === 'model' || name === 'type' || name === 'features') {
+  //       // Clear existing timeout
+  //       if (searchTimeout) {
+  //         clearTimeout(searchTimeout);
+  //       }
+  //       
+  //       // Set new timeout for debounced search (500ms delay)
+  //       const timeout = setTimeout(() => {
+  //         searchSimilarMeters(
+  //           value.brand || '', 
+  //           value.model || '', 
+  //           value.type || '', 
+  //           value.features || ''
+  //         );
+  //       }, 500);
+  //       
+  //       setSearchTimeout(timeout);
+  //     }
+  //   });
+  //   
+  //   return () => subscription.unsubscribe();
+  // }, [form.watch, searchTimeout]);
 
   const onSubmit = async (values: z.infer<typeof createMeterSchema>) => {
     // API Implementation (commented out - replace localStorage when backend is ready)
