@@ -184,13 +184,13 @@ export function CreateMeterForm() {
     // const updatedMeters = [...existingMeters, newMeter];
     // localStorage.setItem("customMeters", JSON.stringify(updatedMeters));
 
-    toast({
-      title: "Meter added successfully",
-      description: `${values.brand} ${values.model} has been added to the directory.`,
-    });
+    // toast({
+    //   title: "Meter added successfully",
+    //   description: `${values.brand} ${values.model} has been added to the directory.`,
+    // });
 
-    form.reset();
-    navigate("/directory");
+    // form.reset();// duplicated above
+    // navigate("/directory");//duplicated above
   };
 
   return (
