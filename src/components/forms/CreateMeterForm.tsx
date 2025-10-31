@@ -152,7 +152,8 @@ export function CreateMeterForm() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create meter. Already in database');
+        console.log('Error data:', errorData);
+        throw new Error(errorData.error || 'Failed to create meter');
       }
 
       const newMeter = await response.json();
