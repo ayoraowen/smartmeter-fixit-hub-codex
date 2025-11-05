@@ -126,6 +126,50 @@ export function CreateBehaviorForm() {
 
       const selectedMeter = meters.find(m => m.id.toString() === data.meterId);
       
+      // Uncomment below to POST to API endpoint instead of local storage
+      /*
+      try {
+        const response = await fetch('https://localhost:3000/behaviors', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            meterId: parseInt(data.meterId),
+            meterBrand: selectedMeter?.brand || "",
+            meterModel: selectedMeter?.model || "",
+            title: data.title,
+            description: data.description,
+            severity: data.severity,
+            symptoms,
+            solutions,
+            reportedBy: data.reportedBy,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to submit behavior');
+        }
+
+        const newBehavior = await response.json();
+
+        toast({
+          title: "Success",
+          description: "Meter behavior reported successfully",
+        });
+
+        navigate(`/behaviors/${newBehavior.id}`);
+      } catch (error) {
+        console.error('Error submitting behavior:', error);
+        toast({
+          title: "Error",
+          description: "Failed to submit behavior. Please try again.",
+          variant: "destructive",
+        });
+      }
+      */
+
+      // Current local storage implementation
       const newBehavior = saveBehavior({
         meterId: parseInt(data.meterId),
         meterBrand: selectedMeter?.brand || "",
