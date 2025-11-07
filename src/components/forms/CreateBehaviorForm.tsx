@@ -104,8 +104,8 @@ export function CreateBehaviorForm() {
     setSolutions(solutions.filter((_, i) => i !== index));
   };
 
-  const onSubmit = (data: BehaviorFormData) => {
-    try {
+  const onSubmit = async (data: BehaviorFormData) => {
+    
       if (symptoms.length === 0) {
         toast({
           title: "Missing symptoms",
@@ -127,26 +127,28 @@ export function CreateBehaviorForm() {
       const selectedMeter = meters.find(m => m.id.toString() === data.meterId);
       
       // Uncomment below to POST to API endpoint instead of local storage
-      /*
+      
       try {
         const response = await fetch('https://localhost:3000/behaviors', {
           method: 'POST',
+          credentials: "include", // 👈 sends the session cookie
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            meterId: parseInt(data.meterId),
-            meterBrand: selectedMeter?.brand || "",
-            meterModel: selectedMeter?.model || "",
+            meter_id: parseInt(data.meterId),
+            // meterBrand: selectedMeter?.brand || "",
+            // meterModel: selectedMeter?.model || "",
             title: data.title,
             description: data.description,
-            severity: data.severity,
-            symptoms,
-            solutions,
-            reportedBy: data.reportedBy,
+            // severity: data.severity,
+            symptoms: symptoms,
+            
+            solutions: solutions,
+            reported_by: data.reportedBy,
           }),
         });
-
+console.log(data.meterId)
         if (!response.ok) {
           throw new Error('Failed to submit behavior');
         }
@@ -158,7 +160,7 @@ export function CreateBehaviorForm() {
           description: "Meter behavior reported successfully",
         });
 
-        navigate(`/behaviors/${newBehavior.id}`);
+        navigate(`/behaviors`);//navigate(`/behaviors/${newBehavior.id}`);
       } catch (error) {
         console.error('Error submitting behavior:', error);
         toast({
@@ -167,35 +169,35 @@ export function CreateBehaviorForm() {
           variant: "destructive",
         });
       }
-      */
+      
 
       // Current local storage implementation
-      const newBehavior = saveBehavior({
-        meterId: parseInt(data.meterId),
-        meterBrand: selectedMeter?.brand || "",
-        meterModel: selectedMeter?.model || "",
-        title: data.title,
-        description: data.description,
-        severity: data.severity,
-        symptoms,
-        solutions,
-        reportedBy: data.reportedBy,
-      });
+    //   const newBehavior = saveBehavior({
+    //     meterId: parseInt(data.meterId),
+    //     meterBrand: selectedMeter?.brand || "",
+    //     meterModel: selectedMeter?.model || "",
+    //     title: data.title,
+    //     description: data.description,
+    //     severity: data.severity,
+    //     symptoms,
+    //     solutions,
+    //     reportedBy: data.reportedBy,
+    //   });
 
-      toast({
-        title: "Success",
-        description: "Meter behavior reported successfully",
-      });
+    //   toast({
+    //     title: "Success",
+    //     description: "Meter behavior reported successfully",
+    //   });
 
-      navigate(`/behaviors/${newBehavior.id}`);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to report behavior",
-        variant: "destructive",
-      });
-    }
-  };
+    //   navigate(`/behaviors/${newBehavior.id}`);
+    // } catch (error) {
+    //   toast({
+    //     title: "Error",
+    //     description: "Failed to report behavior",
+    //     variant: "destructive",
+    //   });
+    }//end of Current localStorage implementation
+  ;
 
   return (
     <Form {...form}>
