@@ -7,10 +7,10 @@ import fs from "fs";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    https: {
-      key: fs.readFileSync("./certs/localhost.key"),
-      cert: fs.readFileSync("./certs/localhost.crt"),
-    },
+    // https: {
+    //   key: fs.readFileSync("./certs/localhost.key"),
+    //   cert: fs.readFileSync("./certs/localhost.crt"),
+    // },
     port: 8080,
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
