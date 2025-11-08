@@ -23,7 +23,7 @@ import { Search, Plus, AlertTriangle, Loader2 } from "lucide-react";
 //   meter?: { //already frontend is intelligent enough to expect meter brand and model here
 //     brand: string;
 //     model: string;
-//   };
+//   };//Need now to add user info when backend supports it. This will require user_id field in behaviors table
 // }
 
 export default function MeterBehaviors() {
