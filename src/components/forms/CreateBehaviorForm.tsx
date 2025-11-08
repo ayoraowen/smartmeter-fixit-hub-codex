@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 
+//interface needed for fetched meters so that we can populate the meter dropdown and have proper typing
 interface ApiFetchedMeter {
   id: number;
   brand: string;

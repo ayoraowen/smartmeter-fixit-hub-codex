@@ -20,7 +20,7 @@ import { Search, Plus, AlertTriangle, Loader2 } from "lucide-react";
 //   reported_by?: string;
 //   created_at: string;
 //   updated_at: string;
-//   meter?: {
+//   meter?: { //already frontend is intelligent enough to expect meter brand and model here
 //     brand: string;
 //     model: string;
 //   };
