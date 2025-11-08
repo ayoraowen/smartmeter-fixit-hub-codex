@@ -8,23 +8,24 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getAllBehaviors } from "@/data/behaviorData";
 import { Search, Plus, AlertTriangle, Loader2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast"; //in CreateMeterForm we used useToast hook, what is the difference?
 
 // Uncomment for API integration
-// interface ApiBehavior {
-//   id: number;
-//   meter_id: number;
-//   title: string;
-//   description: string;
-//   symptoms: string[];
-//   solutions: string[];
-//   reported_by?: string;
-//   created_at: string;
-//   updated_at: string;
-//   meter?: { //already frontend is intelligent enough to expect meter brand and model here
-//     brand: string;
-//     model: string;
-//   };//Need now to add user info when backend supports it. This will require user_id field in behaviors table
-// }
+interface ApiBehavior {
+  id: number;
+  meter_id: number;
+  title: string;
+  description: string;
+  symptoms: string[];
+  solutions: string[];
+  reported_by?: string;
+  created_at: string;
+  updated_at: string;
+  meter?: { //already frontend is intelligent enough to expect meter brand and model here
+    brand: string;
+    model: string;
+  };//To revisit-Need now to add user info when backend supports it. This will require user_id field in behaviors table
+}
 
 export default function MeterBehaviors() {
   const navigate = useNavigate();
@@ -33,71 +34,72 @@ export default function MeterBehaviors() {
   const [selectedSeverity, setSelectedSeverity] = useState<string>("all");
   
   // Current local storage implementation
-  const behaviors = getAllBehaviors();
+  // const behaviors = getAllBehaviors();
   
   // Uncomment for API integration
-  // const [behaviors, setBehaviors] = useState<ApiBehavior[]>([]);
-  // const [isLoading, setIsLoading] = useState(true);
+  const [behaviors, setBehaviors] = useState<ApiBehavior[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // useEffect(() => {
-  //   const fetchBehaviors = async () => {
-  //     try {
-  //       setIsLoading(true);
-  //       const response = await fetch('https://localhost:3000/behaviors', {
-  //         credentials: "include",
-  //       });
-  //       
-  //       if (!response.ok) {
-  //         throw new Error('Failed to fetch behaviors');
-  //       }
-  //       
-  //       const data: ApiBehavior[] = await response.json();
-  //       setBehaviors(data);
-  //     } catch (error) {
-  //       console.error('Error fetching behaviors:', error);
-  //       toast({
-  //         title: "Error",
-  //         description: "Failed to load behaviors. Please try again later.",
-  //         variant: "destructive",
-  //       });
-  //       setBehaviors([]);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-  //
-  //   fetchBehaviors();
-  //   
-  //   // Refetch when returning from create page
-  //   // The location.state?.refreshBehaviors flag is set in CreateBehaviorForm
-  // }, [location.state?.refreshBehaviors]);
+  useEffect(() => {
+    const fetchBehaviors = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('https://localhost:3000/behaviors', {
+          credentials: "include",
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch behaviors');
+        }
+        
+        const data: ApiBehavior[] = await response.json();
+        setBehaviors(data);
+      } catch (error) {
+        console.error('Error fetching behaviors:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load behaviors. Please try again later.",
+          variant: "destructive",
+        });
+        setBehaviors([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
+    fetchBehaviors();
+    
+    // Refetch when returning from create page
+    // The location.state?.refreshBehaviors flag is set in CreateBehaviorForm
+  }, [location.state?.refreshBehaviors]);
 
-  const filteredBehaviors = behaviors.filter(behavior => {
-    const matchesSearch = 
-      behavior.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      behavior.meterBrand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      behavior.meterModel.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      behavior.description.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesSeverity = selectedSeverity === "all" || behavior.severity === selectedSeverity;
-    
-    return matchesSearch && matchesSeverity;
-  });
-  
-  // Uncomment for API integration - adjust filter logic for API data structure
+  // This implementation is for local storage data
   // const filteredBehaviors = behaviors.filter(behavior => {
   //   const matchesSearch = 
   //     behavior.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     (behavior.meter?.brand || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     (behavior.meter?.model || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //     behavior.meterBrand.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //     behavior.meterModel.toLowerCase().includes(searchTerm.toLowerCase()) ||
   //     behavior.description.toLowerCase().includes(searchTerm.toLowerCase());
-  //   
-  //   // Note: API might need severity field added to match this filtering
-  //   // const matchesSeverity = selectedSeverity === "all" || behavior.severity === selectedSeverity;
-  //   const matchesSeverity = true; // Remove if API has severity field
-  //   
+    
+  //   const matchesSeverity = selectedSeverity === "all" || behavior.severity === selectedSeverity;
+    
   //   return matchesSearch && matchesSeverity;
   // });
+  
+  // Uncomment for API integration - adjust filter logic for API data structure
+  const filteredBehaviors = behaviors.filter(behavior => {
+    const matchesSearch = 
+      behavior.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (behavior.meter?.brand || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (behavior.meter?.model || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      behavior.description.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Note: API might need severity field added to match this filtering
+    // const matchesSeverity = selectedSeverity === "all" || behavior.severity === selectedSeverity;
+    //const matchesSeverity = true; // Remove if API has severity field
+    
+    return matchesSearch //&& matchesSeverity;
+  });
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -174,12 +176,12 @@ export default function MeterBehaviors() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-xl font-semibold">{behavior.title}</h3>
-                      <Badge variant={getSeverityColor(behavior.severity)}>
+                      {/* <Badge variant={getSeverityColor(behavior.severity)}>
                         {behavior.severity}
-                      </Badge>
+                      </Badge> */}
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">
-                      {behavior.meterBrand} - {behavior.meterModel}
+                      {behavior.meter?.brand} - {behavior.meter?.model}
                       {/* For API: {behavior.meter?.brand} - {behavior.meter?.model} */}
                     </p>
                     <p className="text-muted-foreground">{behavior.description}</p>
@@ -190,8 +192,9 @@ export default function MeterBehaviors() {
                   <div className="flex gap-4 text-sm text-muted-foreground">
                     <span>{behavior.symptoms.length} symptoms</span>
                     <span>{behavior.solutions.length} solutions</span>
-                    <span>Reported: {behavior.dateReported}</span>
-                    {/* For API: <span>Reported: {new Date(behavior.created_at).toLocaleDateString()}</span> */}
+                    {/* <span>Reported: {behavior.dateReported}</span> */}
+                    <span>Reported: {new Date(behavior.created_at).toLocaleDateString()}</span>{/*For API:*/}
+                    <span>By: {behavior.reported_by || "Anonymous"}</span>{/*To revisit once final decision between reported_by and user_id is made*/}
                   </div>
                   <Button
                     variant="outline"
