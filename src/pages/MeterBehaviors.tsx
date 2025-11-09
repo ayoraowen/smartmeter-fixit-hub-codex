@@ -196,8 +196,12 @@ console.log(filteredBehaviors.map(b => b.symptoms.length))
 
                 <div className="flex items-center justify-between mt-4 pt-4 border-t">
                   <div className="flex gap-4 text-sm text-muted-foreground">
-                    <span>{behavior.symptoms.length} symptoms</span>{/*Bug in calculating length, right now being calculated as a string instead of as an array - to use example in Directory ie. const featuresDbColStringToArray = Array.isArray(meter.features) ? meter.features : JSON.parse(meter.features || "[]"); */}
-                    <span>{behavior.solutions.length} solutions</span>{/*Bug in calculating length, right now being calculated as a string instead of as an array - to use example in Directory ie. const featuresDbColStringToArray = Array.isArray(meter.features) ? meter.features : JSON.parse(meter.features || "[]"); */}
+                    <span>
+                      {Array.isArray(behavior.symptoms) ? behavior.symptoms.length : JSON.parse(behavior.symptoms || "[]").length} symptoms
+                    </span>{/*Bug in calculating length now corrected*/}
+                    <span>
+                      {Array.isArray(behavior.solutions) ? behavior.solutions.length : JSON.parse(behavior.solutions || "[]").length} solutions
+                    </span>{/*Bug in calculating length now corrected*/}
                     {/* <span>Reported: {behavior.dateReported}</span> */}
                     <span>Reported: {new Date(behavior.created_at).toLocaleDateString()}</span>{/*For API:*/}
                     <span>By: {behavior.reported_by || "Anonymous"}</span>{/*To revisit once final decision between reported_by and user_id is made*/}
