@@ -20,6 +20,7 @@ const createMeterSchema = z.object({
   model: z.string().min(1, "Model is required").max(100),
   type: z.string().min(1, "Type is required").max(100),
   features: z.string().min(1, "At least one feature is required"),
+  // year_of_manufacture: z.string().regex(/^\d{4}$/, "Must be a valid year (YYYY)").optional(),
 });
 
 export function CreateMeterForm() {
@@ -39,6 +40,7 @@ export function CreateMeterForm() {
       model: "",
       type: "",
       features: "",
+      // year_of_manufacture: "",
     },
   });
 
@@ -147,6 +149,7 @@ export function CreateMeterForm() {
           model: values.model,
           connection_type: values.type,
           features: values.features.split(",").map(f => f.trim()),
+          // year_of_manufacture: values.year_of_manufacture ? parseInt(values.year_of_manufacture) : null,
         }),
       });
 
@@ -268,6 +271,20 @@ export function CreateMeterForm() {
             </FormItem>
           )}
         />
+
+        {/* <FormField
+          control={form.control}
+          name="year_of_manufacture"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Year of Manufacture (optional)</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., 2024" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        /> */}
 
         <div className="flex gap-4">
           <Button 
