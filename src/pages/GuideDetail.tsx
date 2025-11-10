@@ -10,6 +10,30 @@ import { getAllMeters } from "@/data/meterData";
 
 export default function GuideDetail() {
   const { id } = useParams<{ id: string }>();
+  
+  // For API implementation:
+  // const [guide, setGuide] = useState<any>(null);
+  // const [isLoading, setIsLoading] = useState(true);
+  // const [error, setError] = useState<string | null>(null);
+  
+  // useEffect(() => {
+  //   const fetchGuide = async () => {
+  //     try {
+  //       setIsLoading(true);
+  //       const response = await fetch(`https://localhost:3000/guides/${id}`);
+  //       if (!response.ok) throw new Error('Failed to fetch guide');
+  //       const data = await response.json();
+  //       setGuide(data);
+  //     } catch (err) {
+  //       setError(err instanceof Error ? err.message : 'An error occurred');
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
+  //   fetchGuide();
+  // }, [id]);
+  
+  // For now, using local data:
   const guide = getGuideById(Number(id));
   const meters = getAllMeters();
   const meter = meters.find(m => m.id.toString() === guide?.meterId);
