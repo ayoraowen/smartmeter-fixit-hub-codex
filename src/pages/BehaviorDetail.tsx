@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Card } from "@/components/ui/card";
@@ -11,29 +12,29 @@ export default function BehaviorDetail() {
   const navigate = useNavigate();
   
   // For API implementation:
-  // const [behavior, setBehavior] = useState<any>(null);
-  // const [isLoading, setIsLoading] = useState(true);
-  // const [error, setError] = useState<string | null>(null);
+  const [behavior, setBehavior] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  // useEffect(() => {
-  //   const fetchBehavior = async () => {
-  //     try {
-  //       setIsLoading(true);
-  //       const response = await fetch(`https://localhost:3000/behaviors/${id}`);
-  //       if (!response.ok) throw new Error('Failed to fetch behavior');
-  //       const data = await response.json();
-  //       setBehavior(data);
-  //     } catch (err) {
-  //       setError(err instanceof Error ? err.message : 'An error occurred');
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-  //   fetchBehavior();
-  // }, [id]);
+  useEffect(() => {
+    const fetchBehavior = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(`https://localhost:3000/behaviors/${id}`);
+        if (!response.ok) throw new Error('Failed to fetch behavior');
+        const data = await response.json();
+        setBehavior(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchBehavior();
+  }, [id]);
   
   // For now, using local data:
-  const behavior = getBehaviorById(id || "");
+  // const behavior = getBehaviorById(id || "");
 
   if (!behavior) {
     return (
@@ -81,23 +82,23 @@ export default function BehaviorDetail() {
               <div>
                 <h1 className="text-3xl font-bold mb-2">{behavior.title}</h1>
                 <p className="text-muted-foreground">
-                  {behavior.meterBrand} - {behavior.meterModel}
+                  {behavior.meter.brand} - {behavior.meter.model}
                 </p>
               </div>
               <Badge variant={getSeverityColor(behavior.severity)}>
-                {behavior.severity.toUpperCase()}
+                {/* {behavior.severity.toUpperCase()} */}
               </Badge>
             </div>
 
             <div className="flex gap-4 text-sm text-muted-foreground mb-6">
               <div className="flex items-center gap-1">
                 <Calendar className="h-4 w-4" />
-                <span>{behavior.dateReported}</span>
+                <span>{new Date(behavior.created_at).toLocaleDateString()}</span>
               </div>
-              {behavior.reportedBy && (
+              {behavior.reported_by && (
                 <div className="flex items-center gap-1">
                   <User className="h-4 w-4" />
-                  <span>{behavior.reportedBy}</span>
+                  <span>{behavior.reported_by}</span>
                 </div>
               )}
             </div>
