@@ -117,12 +117,12 @@ export default function BehaviorDetail() {
             <ul className="space-y-2">
               {Array.isArray(behavior.symptoms) ? behavior.symptoms.map((symptom, index) => (
                 <li key={index} className="flex items-start gap-2">
-                  <span className="text-destructive mt-1">•</span>
+                  <span className="text-destructive mt-0">•</span>
                   <span>{symptom}</span>
                 </li>
               )) : JSON.parse(behavior.symptoms || "[]").map((symptom: string, index: number) => (
                 <li key={index} className="flex items-start gap-2">
-                  <span className="text-destructive mt-1">•</span>
+                  <span className="text-destructive mt-0">•</span>
                   <span>{symptom}</span>
                 </li>
               )) 
