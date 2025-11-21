@@ -260,6 +260,20 @@ export function CreateMeterForm() {
 
         <FormField
           control={form.control}
+          name="year_of_manufacture"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Year of Manufacture (optional)</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., 2024" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="features"
           render={({ field }) => (
             <FormItem>
@@ -272,19 +286,7 @@ export function CreateMeterForm() {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="year_of_manufacture"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Year of Manufacture (optional)</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., 2024" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        
 
         <div className="flex gap-4">
           <Button 
