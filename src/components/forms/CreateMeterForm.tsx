@@ -149,7 +149,7 @@ export function CreateMeterForm() {
           model: values.model,
           connection_type: values.type,
           features: values.features.split(",").map(f => f.trim()),
-          // year_of_manufacture: values.year_of_manufacture ? parseInt(values.year_of_manufacture) : null,
+          // year_of_manufacture: values.year_of_manufacture ? parseInt(values.year_of_manufacture) : null,//i now get this boolean expression, its because we want this to be optional
         }),
       });
 
