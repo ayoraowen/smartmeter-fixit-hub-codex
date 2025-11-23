@@ -3,18 +3,25 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Edit, Save, X } from "lucide-react";
 import { getAllMeters } from "@/data/meterData";
 import { useState, useEffect } from "react";
+// import { Input } from "@/components/ui/input";
+// import { useToast } from "@/hooks/use-toast";
 
 export default function MeterDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  // const { toast } = useToast();
 
   // API call to fetch meter details from backend
   const [meter, setMeter] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Edit mode state
+  // const [isEditMode, setIsEditMode] = useState(false);
+  // const [editedMeter, setEditedMeter] = useState<any>(null);
 
   useEffect(() => {
     const fetchMeter = async () => {
@@ -39,6 +46,62 @@ export default function MeterDetail() {
   // Using local data for now
   // const allMeters = getAllMeters();
   // const meter = allMeters.find(m => m.id === Number(id));
+
+  // Handle edit mode toggle
+  // const handleEditToggle = () => {
+  //   if (!isEditMode) {
+  //     setEditedMeter({ ...meter });
+  //   }
+  //   setIsEditMode(!isEditMode);
+  // };
+
+  // Handle input changes in edit mode
+  // const handleInputChange = (field: string, value: string) => {
+  //   setEditedMeter((prev: any) => ({ ...prev, [field]: value }));
+  // };
+
+  // Handle save with API call
+  // const handleSave = async () => {
+  //   try {
+  //     const response = await fetch(`https://localhost:3000/meters/${id}`, {
+  //       method: 'PUT',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({
+  //         brand: editedMeter.brand,
+  //         model: editedMeter.model,
+  //         connection_type: editedMeter.connection_type,
+  //         year_of_manufacture: parseInt(editedMeter.year_of_manufacture),
+  //         features: JSON.stringify(editedMeter.features),
+  //       }),
+  //     });
+  //
+  //     if (!response.ok) {
+  //       throw new Error('Failed to update meter');
+  //     }
+  //
+  //     const updatedMeter = await response.json();
+  //     setMeter(updatedMeter);
+  //     setIsEditMode(false);
+  //     toast({
+  //       title: "Success",
+  //       description: "Meter updated successfully",
+  //     });
+  //   } catch (err) {
+  //     toast({
+  //       title: "Error",
+  //       description: err instanceof Error ? err.message : "Failed to update meter",
+  //       variant: "destructive",
+  //     });
+  //   }
+  // };
+
+  // Handle cancel edit
+  // const handleCancel = () => {
+  //   setEditedMeter(null);
+  //   setIsEditMode(false);
+  // };
 
   if (!meter) {
     return (
@@ -78,19 +141,62 @@ export default function MeterDetail() {
           <Card>
             <CardHeader>
               <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="text-3xl mb-2">
-                    {meter.model}
-                  </CardTitle>
-                  {/* <CardDescription className="text-lg">
-                    {meter.connection_type}
-                  </CardDescription> */}
-                  <p className="text-lg text-primary font-medium">{meter.brand}</p>
-                  <p className="text-sm text-muted-foreground mt-1">Year: {meter.year_of_manufacture}</p>
+                <div className="flex-1">
+                  {/* {isEditMode ? (
+                    <div className="space-y-3">
+                      <Input
+                        value={editedMeter.model}
+                        onChange={(e) => handleInputChange('model', e.target.value)}
+                        placeholder="Model"
+                        className="text-2xl font-bold"
+                      />
+                      <Input
+                        value={editedMeter.brand}
+                        onChange={(e) => handleInputChange('brand', e.target.value)}
+                        placeholder="Brand"
+                      />
+                      <Input
+                        value={editedMeter.year_of_manufacture}
+                        onChange={(e) => handleInputChange('year_of_manufacture', e.target.value)}
+                        placeholder="Year"
+                        type="number"
+                      />
+                    </div>
+                  ) : ( */}
+                    <div>
+                      <CardTitle className="text-3xl mb-2">
+                        {meter.model}
+                      </CardTitle>
+                      {/* <CardDescription className="text-lg">
+                        {meter.connection_type}
+                      </CardDescription> */}
+                      <p className="text-lg text-primary font-medium">{meter.brand}</p>
+                      <p className="text-sm text-muted-foreground mt-1">Year: {meter.year_of_manufacture}</p>
+                    </div>
+                  {/* )} */}
                 </div>
-                <Badge variant="secondary" className="text-sm">
-                  {meter.connection_type}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  {/* {isEditMode ? (
+                    <>
+                      <Button size="sm" onClick={handleSave}>
+                        <Save className="h-4 w-4 mr-1" />
+                        Save
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={handleCancel}>
+                        <X className="h-4 w-4 mr-1" />
+                        Cancel
+                      </Button>
+                    </>
+                  ) : (
+                    <Button size="sm" variant="outline" onClick={handleEditToggle}>
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
+                  )} */}
+                  <Badge variant="secondary" className="text-sm">
+                    {meter.connection_type}
+                  </Badge>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
