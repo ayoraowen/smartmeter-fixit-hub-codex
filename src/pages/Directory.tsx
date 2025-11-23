@@ -176,7 +176,7 @@ export default function Directory() {
 
                   <Button 
                     className="w-full"
-                    // onClick={() => navigate(`/directory/${meter.id}`)}
+                    onClick={() => navigate(`/directory/${meter.id}`)}
                   >
                     View Details
                   </Button>
