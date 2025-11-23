@@ -5,40 +5,40 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
 import { getAllMeters } from "@/data/meterData";
-// import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 export default function MeterDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // Commented-out API call to fetch meter details from backend
-  // const [meter, setMeter] = useState<any>(null);
-  // const [isLoading, setIsLoading] = useState(true);
-  // const [error, setError] = useState<string | null>(null);
+  // API call to fetch meter details from backend
+  const [meter, setMeter] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // useEffect(() => {
-  //   const fetchMeter = async () => {
-  //     try {
-  //       setIsLoading(true);
-  //       const response = await fetch(`https://localhost:3000/meters/${id}`);
-  //       if (!response.ok) {
-  //         throw new Error('Failed to fetch meter details');
-  //       }
-  //       const data = await response.json();
-  //       setMeter(data);
-  //     } catch (err) {
-  //       setError(err instanceof Error ? err.message : 'An error occurred');
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
+  useEffect(() => {
+    const fetchMeter = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(`https://localhost:3000/meters/${id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch meter details');
+        }
+        const data = await response.json();
+        setMeter(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  //   fetchMeter();
-  // }, [id]);
+    fetchMeter();
+  }, [id]);
 
   // Using local data for now
-  const allMeters = getAllMeters();
-  const meter = allMeters.find(m => m.id === Number(id));
+  // const allMeters = getAllMeters();
+  // const meter = allMeters.find(m => m.id === Number(id));
 
   if (!meter) {
     return (
@@ -97,11 +97,23 @@ export default function MeterDetail() {
                 <div>
                   <h3 className="font-semibold mb-3">Features</h3>
                   <div className="flex flex-wrap gap-2">
-                    {meter.features.map((feature, index) => (
+                    {/* {meter.features.map((feature, index) => (
                       <Badge key={index} variant="outline">
                         {feature}
                       </Badge>
-                    ))}
+                    ))} */}
+                    {(Array.isArray(meter.features)
+                                            ? meter.features
+                                            : JSON.parse(meter.features || "[]")
+                                          ).map((feature, index) => (
+                                            <Badge
+                                              key={index}
+                                              variant="outline"
+                                              className="text-xs"
+                                            >
+                                              {feature}
+                                            </Badge>
+                                          ))}
                   </div>
                 </div>
 
