@@ -18,6 +18,7 @@ import CreateBehavior from "./pages/CreateBehavior";
 import Community from "./pages/Community";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import MeterDetail from "./pages/MeterDetail";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/behaviors/create" element={<ProtectedRoute><CreateBehavior /></ProtectedRoute>} />
             <Route path="/community" element={<Community />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/directory/:id" element={<MeterDetail />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
