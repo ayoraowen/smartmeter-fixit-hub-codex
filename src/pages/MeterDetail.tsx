@@ -80,15 +80,16 @@ export default function MeterDetail() {
               <div className="flex items-start justify-between">
                 <div>
                   <CardTitle className="text-3xl mb-2">
-                    {meter.brand} {meter.model}
+                    {meter.model}
                   </CardTitle>
-                  <CardDescription className="text-lg">
-                    {meter.type}
-                  </CardDescription>
-                  {/* <p className="text-sm text-muted-foreground mt-1">Year: {meter.year_of_manufacture}</p> */}
+                  {/* <CardDescription className="text-lg">
+                    {meter.connection_type}
+                  </CardDescription> */}
+                  <p className="text-lg text-primary font-medium">{meter.brand}</p>
+                  <p className="text-sm text-muted-foreground mt-1">Year: {meter.year_of_manufacture}</p>
                 </div>
                 <Badge variant="secondary" className="text-sm">
-                  {meter.brand}
+                  {meter.connection_type}
                 </Badge>
               </div>
             </CardHeader>
