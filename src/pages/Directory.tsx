@@ -174,7 +174,12 @@ export default function Directory() {
                     </span>
                   </div>
 
-                  <Button className="w-full">View Details</Button>
+                  <Button 
+                    className="w-full"
+                    // onClick={() => navigate(`/directory/${meter.id}`)}
+                  >
+                    View Details
+                  </Button>
                 </div>
               </CardContent>
             </Card>
