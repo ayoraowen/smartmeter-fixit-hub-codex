@@ -6,13 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Edit, Save, X } from "lucide-react";
 import { getAllMeters } from "@/data/meterData";
 import { useState, useEffect } from "react";
-// import { Input } from "@/components/ui/input";
-// import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 export default function MeterDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  // const { toast } = useToast();
+  const { toast } = useToast();
 
   // API call to fetch meter details from backend
   const [meter, setMeter] = useState<any>(null);
@@ -20,8 +20,8 @@ export default function MeterDetail() {
   const [error, setError] = useState<string | null>(null);
 
   // Edit mode state
-  // const [isEditMode, setIsEditMode] = useState(false);
-  // const [editedMeter, setEditedMeter] = useState<any>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedMeter, setEditedMeter] = useState<any>(null);
 
   useEffect(() => {
     const fetchMeter = async () => {
@@ -48,60 +48,60 @@ export default function MeterDetail() {
   // const meter = allMeters.find(m => m.id === Number(id));
 
   // Handle edit mode toggle
-  // const handleEditToggle = () => {
-  //   if (!isEditMode) {
-  //     setEditedMeter({ ...meter });
-  //   }
-  //   setIsEditMode(!isEditMode);
-  // };
+  const handleEditToggle = () => {
+    if (!isEditMode) {
+      setEditedMeter({ ...meter });
+    }
+    setIsEditMode(!isEditMode);
+  };
 
-  // Handle input changes in edit mode
-  // const handleInputChange = (field: string, value: string) => {
-  //   setEditedMeter((prev: any) => ({ ...prev, [field]: value }));
-  // };
+  //Handle input changes in edit mode
+  const handleInputChange = (field: string, value: string) => {
+    setEditedMeter((prev: any) => ({ ...prev, [field]: value }));
+  };
 
-  // Handle save with API call
-  // const handleSave = async () => {
-  //   try {
-  //     const response = await fetch(`https://localhost:3000/meters/${id}`, {
-  //       method: 'PUT',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify({
-  //         brand: editedMeter.brand,
-  //         model: editedMeter.model,
-  //         connection_type: editedMeter.connection_type,
-  //         year_of_manufacture: parseInt(editedMeter.year_of_manufacture),
-  //         features: JSON.stringify(editedMeter.features),
-  //       }),
-  //     });
-  //
-  //     if (!response.ok) {
-  //       throw new Error('Failed to update meter');
-  //     }
-  //
-  //     const updatedMeter = await response.json();
-  //     setMeter(updatedMeter);
-  //     setIsEditMode(false);
-  //     toast({
-  //       title: "Success",
-  //       description: "Meter updated successfully",
-  //     });
-  //   } catch (err) {
-  //     toast({
-  //       title: "Error",
-  //       description: err instanceof Error ? err.message : "Failed to update meter",
-  //       variant: "destructive",
-  //     });
-  //   }
-  // };
+  //Handle save with API call
+  const handleSave = async () => {
+    try {
+      const response = await fetch(`https://localhost:3000/meters/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          brand: editedMeter.brand,
+          model: editedMeter.model,
+          connection_type: editedMeter.connection_type,
+          year_of_manufacture: parseInt(editedMeter.year_of_manufacture),
+          features: JSON.stringify(editedMeter.features),
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to update meter');
+      }
+  
+      const updatedMeter = await response.json();
+      setMeter(updatedMeter);
+      setIsEditMode(false);
+      toast({
+        title: "Success",
+        description: "Meter updated successfully",
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to update meter",
+        variant: "destructive",
+      });
+    }
+  };
 
-  // Handle cancel edit
-  // const handleCancel = () => {
-  //   setEditedMeter(null);
-  //   setIsEditMode(false);
-  // };
+  //Handle cancel edit
+  const handleCancel = () => {
+    setEditedMeter(null);
+    setIsEditMode(false);
+  };
 
   if (!meter) {
     return (
