@@ -57,7 +57,7 @@ export default function MeterDetail() {
   };
 
   //Handle input changes in edit mode
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | string[]) => {
     setEditedMeter((prev: any) => ({ ...prev, [field]: value }));
   };
 
