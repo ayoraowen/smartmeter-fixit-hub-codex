@@ -57,7 +57,7 @@ export default function MeterDetail() {
   };
 
   //Handle input changes in edit mode
-  const handleInputChange = (field: string, value: string | string[]) => {
+  const handleInputChange = (field: string, value: string | string[]) => {//line 195 below was flagging error on featuresArray "Argument of type 'string[]' is not assignable to parameter of type 'string'" hence the previous commit after correction.
     setEditedMeter((prev: any) => ({ ...prev, [field]: value }));
   };
 
