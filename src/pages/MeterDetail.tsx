@@ -7,6 +7,7 @@ import { ArrowLeft, Edit, Save, X } from "lucide-react";
 import { getAllMeters } from "@/data/meterData";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
 export default function MeterDetail() {
@@ -143,24 +144,59 @@ export default function MeterDetail() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   {isEditMode ? (
-                    <div className="space-y-3">
-                      <Input
-                        value={editedMeter.model}
-                        onChange={(e) => handleInputChange('model', e.target.value)}
-                        placeholder="Model"
-                        className="text-2xl font-bold"
-                      />
-                      <Input
-                        value={editedMeter.brand}
-                        onChange={(e) => handleInputChange('brand', e.target.value)}
-                        placeholder="Brand"
-                      />
-                      <Input
-                        value={editedMeter.year_of_manufacture}
-                        onChange={(e) => handleInputChange('year_of_manufacture', e.target.value)}
-                        placeholder="Year"
-                        type="number"
-                      />
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="model">Model</Label>
+                        <Input
+                          id="model"
+                          value={editedMeter.model}
+                          onChange={(e) => handleInputChange('model', e.target.value)}
+                          placeholder="Model"
+                          className="text-2xl font-bold"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="brand">Brand</Label>
+                        <Input
+                          id="brand"
+                          value={editedMeter.brand}
+                          onChange={(e) => handleInputChange('brand', e.target.value)}
+                          placeholder="Brand"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="year">Year of Manufacture</Label>
+                        <Input
+                          id="year"
+                          value={editedMeter.year_of_manufacture}
+                          onChange={(e) => handleInputChange('year_of_manufacture', e.target.value)}
+                          placeholder="Year"
+                          type="number"
+                        />
+                      </div>
+                      {/* <div className="space-y-2">
+                        <Label htmlFor="connection_type">Connection Type</Label>
+                        <Input
+                          id="connection_type"
+                          value={editedMeter.connection_type}
+                          onChange={(e) => handleInputChange('connection_type', e.target.value)}
+                          placeholder="Connection Type"
+                        />
+                      </div> */}
+                      {/* <div className="space-y-2">
+                        <Label htmlFor="features">Features (comma-separated)</Label>
+                        <Input
+                          id="features"
+                          value={Array.isArray(editedMeter.features) 
+                            ? editedMeter.features.join(', ') 
+                            : editedMeter.features}
+                          onChange={(e) => {
+                            const featuresArray = e.target.value.split(',').map(f => f.trim());
+                            handleInputChange('features', featuresArray);
+                          }}
+                          placeholder="Feature 1, Feature 2, Feature 3"
+                        />
+                      </div> */}
                     </div>
                   ) : (
                     <div>
