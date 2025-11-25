@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useCommaSeparatedInput } from "@/hooks/use-comma-separated-input";
 
 export default function MeterDetail() {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +24,10 @@ export default function MeterDetail() {
   // Edit mode state
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedMeter, setEditedMeter] = useState<any>(null);
+
+  //the following works with the custom hook for comma separated input
+  const featuresInput = useCommaSeparatedInput("")
+  // End of custom hook usage
 
   useEffect(() => {
     const fetchMeter = async () => {
@@ -49,12 +54,25 @@ export default function MeterDetail() {
   // const meter = allMeters.find(m => m.id === Number(id));
 
   // Handle edit mode toggle
+  // const handleEditToggle = () => {
+  //   if (!isEditMode) {
+  //     setEditedMeter({ ...meter });
+  //   }
+  //   setIsEditMode(!isEditMode);
+  // };
+
   const handleEditToggle = () => {
     if (!isEditMode) {
       setEditedMeter({ ...meter });
+      const initialFeatures = (Array.isArray(meter.features) 
+      ? meter.features
+      : JSON.parse(meter.features || "[]"));//.join(', ');
+      featuresInput.setValue(initialFeatures.join(', '));
     }
     setIsEditMode(!isEditMode);
-  };
+  }
+
+
 
   //Handle input changes in edit mode
   const handleInputChange = (field: string, value: string | string[]) => {//line 195 below was flagging error on featuresArray "Argument of type 'string[]' is not assignable to parameter of type 'string'" hence the previous commit after correction.
@@ -64,6 +82,7 @@ export default function MeterDetail() {
   //Handle save with API call
   const handleSave = async () => {
     try {
+      const featuresArray = featuresInput.toArray();
       const response = await fetch(`https://localhost:3000/meters/${id}`, {
         method: 'PUT',
         headers: {
@@ -74,7 +93,7 @@ export default function MeterDetail() {
           model: editedMeter.model,
           connection_type: editedMeter.connection_type,
           year_of_manufacture: parseInt(editedMeter.year_of_manufacture),
-          features: editedMeter.features
+          features: featuresArray//editedMeter.features
         }),
       });
   
@@ -185,7 +204,7 @@ export default function MeterDetail() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="features">Features (comma-separated)</Label>
-                        <Input
+                        {/* <Input
                           id="features"
                           value={(Array.isArray(editedMeter.features) 
                             ? editedMeter.features
@@ -194,6 +213,13 @@ export default function MeterDetail() {
                             const featuresArray = e.target.value.split(',').map(f => f.trim());
                             handleInputChange('features', featuresArray);
                           }}
+                          placeholder="Feature 1, Feature 2, Feature 3"
+                        /> */}
+                        <Input
+                          id="features"
+                          value={featuresInput.value}
+                          onChange={featuresInput.handleChange}
+                          onKeyDown={featuresInput.handleKeyDown}
                           placeholder="Feature 1, Feature 2, Feature 3"
                         />
                       </div>
