@@ -25,7 +25,7 @@ export default function Directory() {
         const token = localStorage.getItem('authToken')
         const response = await fetch('https://localhost:3000/meters', {
           method: 'GET',
-          credentials: "include", // 👈 sends the session cookie
+          // credentials: "include", // 👈 sends the session cookie
           headers: {
             'Content-Type': 'application/json',
             // 'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
