@@ -76,7 +76,7 @@ const Auth = () => {
       // Example implementation:
       const response = await fetch('https://localhost:3000/login', {
         method: 'POST',
-        credentials: "include", // <---- VERY IMPORTANT
+        // credentials: "include", // <---- VERY IMPORTANT
         headers: {
           'Content-Type': 'application/json',
         },
