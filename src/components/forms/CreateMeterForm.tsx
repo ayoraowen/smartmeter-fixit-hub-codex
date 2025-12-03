@@ -139,10 +139,10 @@ export function CreateMeterForm() {
     try {
       const response = await fetch('https://localhost:3000/meters', {
         method: 'POST',
-        credentials: "include", // 👈 sends the session cookie
+        // credentials: "include", // 👈 sends the session cookie
         headers: {
           'Content-Type': 'application/json',
-          // 'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         },
         body: JSON.stringify({
           brand: values.brand,
