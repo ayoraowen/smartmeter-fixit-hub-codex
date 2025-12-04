@@ -36,7 +36,11 @@ export default function MeterDetail() {
     const fetchMeter = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`https://localhost:3000/meters/${id}`);
+        const response = await fetch(`https://localhost:3000/meters/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          }
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch meter details');
         }
@@ -90,6 +94,7 @@ export default function MeterDetail() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
         body: JSON.stringify({
           brand: editedMeter.brand,
