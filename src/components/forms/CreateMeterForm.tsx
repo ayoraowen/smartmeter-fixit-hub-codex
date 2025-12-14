@@ -251,7 +251,7 @@ export function CreateMeterForm() {
             <FormItem>
               <FormLabel>Connection Type</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., Smart Grid Meter" {...field} />
+                <Input placeholder="e.g., 3 Phase CT-PT Meter" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
