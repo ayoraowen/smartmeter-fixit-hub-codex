@@ -11,6 +11,7 @@ import { Search, Plus, AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast"; //in CreateMeterForm we used useToast hook, what is the difference?
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Activity } from "lucide-react";
 
 
 // Uncomment for API integration
@@ -170,18 +171,20 @@ console.log(filteredBehaviors.map(b => b.symptoms.length))
     <Layout>
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-4xl font-bold mb-2">Behaviour Guides</h1>
-              <p className="text-muted-foreground">
-                Browse reported meter behaviours, issues, and their solutions
-              </p>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <Activity className="h-8 w-8 text-primary" />
+              <h1 className="text-3xl font-bold mb-2 text-foreground">Behaviour Guides</h1>
+              
             </div>
             <Button onClick={() => navigate("/behaviors/create")}>
               <Plus className="mr-2 h-4 w-4" />
               Report Behaviour
             </Button>
           </div>
+          <p className="text-lg text-muted-foreground mb-8">
+                Browse reported meter behaviours, issues, and their solutions
+          </p>
 
           <div className="flex gap-4">
             <div className="relative flex-1">
