@@ -20,7 +20,8 @@ const createMeterSchema = z.object({
   model: z.string().min(1, "Model is required").max(100),
   type: z.string().min(1, "Type is required").max(100),
   features: z.string().min(1, "At least one feature is required"),
-  year_of_manufacture: z.string().regex(/^\d{4}$/, "Must be a valid year (YYYY)")//.optional(),
+  year_of_manufacture: z.string().regex(/^\d{4}$/, "Must be a valid year (YYYY)"),//.optional(),
+  meter_type_code: z.string().optional()
 });
 
 export function CreateMeterForm() {
@@ -41,6 +42,7 @@ export function CreateMeterForm() {
       type: "",
       features: "",
       // year_of_manufacture: "",
+      //meter_type_code: ""
     },
   });
 
@@ -149,7 +151,8 @@ export function CreateMeterForm() {
           model: values.model,
           connection_type: values.type,
           features: values.features.split(",").map(f => f.trim()),
-          year_of_manufacture: values.year_of_manufacture //? parseInt(values.year_of_manufacture) : null,//i now get this boolean expression, its because we want this to be optional
+          year_of_manufacture: values.year_of_manufacture, //? parseInt(values.year_of_manufacture) : null,//i now get this boolean expression, its because we want this to be optional
+          meter_type_code: values.meter_type_code || null
         }),
       });
 
@@ -252,6 +255,20 @@ export function CreateMeterForm() {
               <FormLabel>Connection Type</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., 3 Phase CT-PT Meter" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="meter_type_code"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Meter Type Code</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., ZMD402CT44.0457 S4" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
