@@ -73,7 +73,7 @@ export default function Directory() {
     const matchesSearch = meter.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          meter.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          meter.connection_type.toLowerCase().includes(searchTerm.toLowerCase());
-                         console.log(meter.model, meter.brand, meter.connection_type, featuresDbColStringToArray);
+                         console.log(meter.model, meter.brand, meter.connection_type, featuresDbColStringToArray, meter.meter_type_code);
     const matchesBrand = selectedBrand === "all" || meter.brand === selectedBrand;
     return matchesSearch && matchesBrand;
   });

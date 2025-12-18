@@ -42,7 +42,7 @@ export function CreateMeterForm() {
       type: "",
       features: "",
       // year_of_manufacture: "",
-      //meter_type_code: ""
+      // meter_type_code: ""
     },
   });
 
