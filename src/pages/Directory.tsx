@@ -188,7 +188,7 @@ export default function Directory() {
                   <div>
                     {/* {value !== null ? <p>{value}</p> : null} */}
                     {/* {meter.meter_type_code !== null ? <CardTitle className="text-lg">{meter.model} - {meter.meter_type_code}</CardTitle> : <CardTitle className="text-lg">{meter.model}</CardTitle>} */}
-                    {meter.meter_type_code?.trim() ? <CardTitle className="text-lg"> {meter.model} - {meter.meter_type_code} </CardTitle> : <CardTitle className="text-lg"> {meter.model} </CardTitle>}
+                    {meter.meter_type_code?.trim() ? <CardTitle className="text-lg"> {meter.model} - {meter.meter_type_code} </CardTitle> : <CardTitle className="text-lg"> {meter.model} </CardTitle>}{/*Refactoring to handle empty strings being stored in remote turso (turso forces null to be an empty string instead of storing null) and null from frontend*/}
                     {/* <CardTitle className="text-lg">{meter.model}</CardTitle> */}
                     <p className="text-sm text-primary font-medium">
                       {meter.brand}

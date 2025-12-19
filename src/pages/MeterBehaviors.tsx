@@ -28,6 +28,7 @@ interface ApiBehavior {
   meter?: { //already frontend is intelligent enough to expect meter brand and model here
     brand: string;
     model: string;
+    meter_type_code: string;
   };//To revisit-Need now to add user info when backend supports it. This will require user_id field in behaviors table
 }
 
@@ -238,10 +239,13 @@ console.log(filteredBehaviors.map(b => b.symptoms.length))
                         {behavior.severity}
                       </Badge> */}
                     </div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {behavior.meter?.brand} - {behavior.meter?.model}
+                    {/* <p className="text-sm text-muted-foreground mb-2"> */}
+                      {behavior.meter?.meter_type_code?.trim() ? 
+                      <p className="text-sm text-muted-foreground mb-2"> {behavior.meter?.brand} - {behavior.meter?.model} - {behavior.meter?.meter_type_code} </p> : 
+                      <p className="text-sm text-muted-foreground mb-2"> {behavior.meter?.brand} - {behavior.meter?.model} </p>}
+                      {/* {behavior.meter?.brand} - {behavior.meter?.model} */}
                       {/* For API: {behavior.meter?.brand} - {behavior.meter?.model} */}
-                    </p>
+                    {/* </p> */}
                     <p className="text-muted-foreground">{behavior.description}</p>
                   </div>
                 </div>
