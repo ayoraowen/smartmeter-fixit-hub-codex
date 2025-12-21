@@ -44,6 +44,8 @@ export default function MeterBehaviors() {
   // Uncomment for API integration
   const [behaviors, setBehaviors] = useState<ApiBehavior[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedBrand, setSelectedBrand] = useState<string>("all");
+
   
   useEffect(() => {
     const fetchBehaviors = async () => {
@@ -100,6 +102,15 @@ export default function MeterBehaviors() {
     
   //   return matchesSearch && matchesSeverity;
   // });
+
+  const availableBrands = Array.from(
+  new Set(
+    behaviors
+      .map(b => b.meter?.brand)
+      .filter(Boolean)
+  )
+).sort();
+
   
   // Uncomment for API integration - adjust filter logic for API data structure
   const filteredBehaviors = behaviors.filter(behavior => {
@@ -112,8 +123,13 @@ export default function MeterBehaviors() {
     // Note: API might need severity field added to match this filtering
     // const matchesSeverity = selectedSeverity === "all" || behavior.severity === selectedSeverity;
     //const matchesSeverity = true; // Remove if API has severity field
+
+    const matchesBrand =
+    selectedBrand === "all" ||
+    behavior.meter?.brand === selectedBrand;
+
+  return matchesSearch && matchesBrand; //&& matchesSeverity;
     
-    return matchesSearch //&& matchesSeverity;
   });
 console.log(filteredBehaviors.map(b => b.symptoms.length))
 
@@ -197,6 +213,18 @@ console.log(filteredBehaviors.map(b => b.symptoms.length))
                 className="pl-10"
               />
             </div>
+            <select
+                value={selectedBrand}
+                onChange={(e) => setSelectedBrand(e.target.value)}
+                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="all">All Brands</option>
+                  {availableBrands.map((brand) => (
+                  <option key={brand} value={brand}>
+                  {brand}
+                </option>
+                ))}
+              </select>
             <Select value={selectedSeverity} onValueChange={setSelectedSeverity}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue />
