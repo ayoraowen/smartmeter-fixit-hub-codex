@@ -222,6 +222,17 @@ export default function MeterDetail() {
                           className="text-2xl font-bold"
                         />
                       </div>
+                      {meter.meter_type_code?.trim() && (
+                      <div className="space-y-2">
+                        <Label htmlFor="model">Meter Type Code</Label>
+                        <Input
+                          id="meter_type_code"
+                          value={editedMeter.meter_type_code}
+                          onChange={(e) => handleInputChange('meter_type_code', e.target.value)}
+                          placeholder="Meter Type Code"
+                          className="text-2xl font-bold"
+                        />  
+                      </div>)}{/*only show if meter_type_code is not empty string or null*/}
                       <div className="space-y-2">
                         <Label htmlFor="brand">Brand</Label>
                         <Input
