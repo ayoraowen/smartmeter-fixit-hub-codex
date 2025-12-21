@@ -349,10 +349,10 @@ if (isLoading) {
         {/* Header Card */}
         <Card className="p-6">
           <h1 className="text-3xl font-bold mb-2">{behavior.title}</h1>
-          <p className="text-muted-foreground mb-2">
-            {behavior.meter.brand} - {behavior.meter.model}
-          </p>
-
+          {behavior.meter?.meter_type_code?.trim() ? 
+          <p className="text-sm text-muted-foreground mb-2"> {behavior.meter?.brand} - {behavior.meter?.model} - {behavior.meter?.meter_type_code} </p> : 
+          <p className="text-sm text-muted-foreground mb-2"> {behavior.meter?.brand} - {behavior.meter?.model} </p>
+          }
           <div className="text-sm text-muted-foreground flex gap-4">
             <div className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
