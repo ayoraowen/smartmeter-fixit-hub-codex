@@ -548,8 +548,8 @@ export default function MeterDetail() {
                 Features
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              {/* <ScrollArea className="max-h-40"> */}
+            <CardContent className="h-40 overflow-hidden">
+              <ScrollArea className="h-full">
                 <div className="flex flex-wrap gap-2 pr-3">
                   {(Array.isArray(meter.features)
                     ? meter.features
@@ -560,7 +560,7 @@ export default function MeterDetail() {
                     </Badge>
                   ))}
                 </div>
-              {/* </ScrollArea> */}
+              </ScrollArea>
             </CardContent>
           </Card>
 
