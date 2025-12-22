@@ -548,9 +548,9 @@ export default function MeterDetail() {
                 Features
               </CardTitle>
             </CardHeader>
-            <CardContent className="h-40 overflow-hidden relative">
+            <CardContent className="h-40 relative">
               <ScrollArea className="h-full">
-                <div className="flex flex-wrap gap-2 pr-3 pb-6">
+                <div className="flex flex-wrap gap-2 pr-3 pb-8">
                   {(Array.isArray(meter.features)
                     ? meter.features
                     : JSON.parse(meter.features || "[]")
@@ -561,7 +561,7 @@ export default function MeterDetail() {
                   ))}
                 </div>
               </ScrollArea>
-              <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card to-transparent pointer-events-none" />
+              <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-card via-card/80 to-transparent pointer-events-none z-10" />
             </CardContent>
           </Card>
 
