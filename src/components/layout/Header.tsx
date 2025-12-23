@@ -1,8 +1,8 @@
-import { Search, Settings, User, LogOut } from "lucide-react";
+import { Settings, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { GlobalSearch } from "./GlobalSearch";
 
 export function Header() {
   const { user, logout } = useAuth();
@@ -24,13 +24,7 @@ export function Header() {
 
           {/* Search Bar */}
           <div className="flex-1 max-w-xl mx-8">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by meter model, error code, or symptom..."
-                className="pl-10 bg-background/50"
-              />
-            </div>
+            <GlobalSearch />
           </div>
 
           {/* User Actions */}
