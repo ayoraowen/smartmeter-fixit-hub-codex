@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Gauge, BookOpen, AlertTriangle, X } from "lucide-react";
+import { Search, Gauge, BookOpen, AlertTriangle, X, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Command,
@@ -10,9 +10,6 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { getAllMeters, type Meter } from "@/data/meterData";
-import { getAllGuides, type Guide } from "@/data/guideData";
-import { getAllBehaviors, type MeterBehavior } from "@/data/behaviorData";
 
 interface SearchResult {
   id: string;
@@ -22,10 +19,37 @@ interface SearchResult {
   path: string;
 }
 
+interface ApiMeter {
+  id: number;
+  brand: string;
+  model: string;
+  type: string;
+  features?: string[];
+}
+
+interface ApiGuide {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  difficulty: string;
+  tags?: string;
+}
+
+interface ApiBehavior {
+  id: number;
+  title: string;
+  description: string;
+  meterBrand?: string;
+  meterModel?: string;
+  symptoms?: string[] | string;
+}
+
 export function GlobalSearch() {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -34,74 +58,128 @@ export function GlobalSearch() {
       return;
     }
 
+    const controller = new AbortController();
     const query = searchTerm.toLowerCase();
-    const searchResults: SearchResult[] = [];
 
-    // Search meters
-    const meters = getAllMeters();
-    meters.forEach((meter: Meter) => {
-      const matchFields = [
-        meter.brand,
-        meter.model,
-        meter.type,
-        ...meter.features,
-      ].map((f) => f.toLowerCase());
+    const fetchSearchResults = async () => {
+      setIsLoading(true);
+      const searchResults: SearchResult[] = [];
+      const token = localStorage.getItem("authToken");
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      };
 
-      if (matchFields.some((field) => field.includes(query))) {
-        searchResults.push({
-          id: `meter-${meter.id}`,
-          type: "meter",
-          title: `${meter.brand} ${meter.model}`,
-          subtitle: meter.type,
-          path: `/meter/${meter.id}`,
-        });
+      try {
+        // Fetch all data in parallel
+        const [metersRes, behaviorsRes, guidesRes] = await Promise.all([
+          fetch("https://localhost:3000/meters", {
+            headers,
+            signal: controller.signal,
+          }).catch(() => null),
+          fetch("https://localhost:3000/behaviors", {
+            headers,
+            signal: controller.signal,
+          }).catch(() => null),
+          fetch("https://localhost:3000/guides", {
+            headers,
+            signal: controller.signal,
+          }).catch(() => null),
+        ]);
+
+        // Process meters
+        if (metersRes?.ok) {
+          const meters: ApiMeter[] = await metersRes.json();
+          meters.forEach((meter) => {
+            const matchFields = [
+              meter.brand,
+              meter.model,
+              meter.type,
+              ...(meter.features || []),
+            ].map((f) => (f || "").toLowerCase());
+
+            if (matchFields.some((field) => field.includes(query))) {
+              searchResults.push({
+                id: `meter-${meter.id}`,
+                type: "meter",
+                title: `${meter.brand} ${meter.model}`,
+                subtitle: meter.type,
+                path: `/meter/${meter.id}`,
+              });
+            }
+          });
+        }
+
+        // Process behaviors
+        if (behaviorsRes?.ok) {
+          const behaviors: ApiBehavior[] = await behaviorsRes.json();
+          behaviors.forEach((behavior) => {
+            const symptoms = Array.isArray(behavior.symptoms)
+              ? behavior.symptoms
+              : typeof behavior.symptoms === "string"
+              ? JSON.parse(behavior.symptoms || "[]")
+              : [];
+
+            const matchFields = [
+              behavior.title,
+              behavior.description,
+              behavior.meterBrand || "",
+              behavior.meterModel || "",
+              ...symptoms,
+            ].map((f) => (f || "").toLowerCase());
+
+            if (matchFields.some((field) => field.includes(query))) {
+              searchResults.push({
+                id: `behavior-${behavior.id}`,
+                type: "behavior",
+                title: behavior.title,
+                subtitle: `${behavior.meterBrand || ""} ${behavior.meterModel || ""}`.trim() || "Unknown meter",
+                path: `/behavior/${behavior.id}`,
+              });
+            }
+          });
+        }
+
+        // Process guides
+        if (guidesRes?.ok) {
+          const guides: ApiGuide[] = await guidesRes.json();
+          guides.forEach((guide) => {
+            const matchFields = [
+              guide.title,
+              guide.description,
+              guide.category,
+              guide.tags || "",
+            ].map((f) => (f || "").toLowerCase());
+
+            if (matchFields.some((field) => field.includes(query))) {
+              searchResults.push({
+                id: `guide-${guide.id}`,
+                type: "guide",
+                title: guide.title,
+                subtitle: `${guide.category} • ${guide.difficulty}`,
+                path: `/guide/${guide.id}`,
+              });
+            }
+          });
+        }
+
+        setResults(searchResults.slice(0, 10));
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          console.error("Search error:", error);
+        }
+      } finally {
+        setIsLoading(false);
       }
-    });
+    };
 
-    // Search guides
-    const guides = getAllGuides();
-    guides.forEach((guide: Guide) => {
-      const matchFields = [
-        guide.title,
-        guide.description,
-        guide.category,
-        guide.tags || "",
-      ].map((f) => f.toLowerCase());
+    // Debounce the search
+    const timeoutId = setTimeout(fetchSearchResults, 300);
 
-      if (matchFields.some((field) => field.includes(query))) {
-        searchResults.push({
-          id: `guide-${guide.id}`,
-          type: "guide",
-          title: guide.title,
-          subtitle: `${guide.category} • ${guide.difficulty}`,
-          path: `/guide/${guide.id}`,
-        });
-      }
-    });
-
-    // Search behaviors (issues)
-    const behaviors = getAllBehaviors();
-    behaviors.forEach((behavior: MeterBehavior) => {
-      const matchFields = [
-        behavior.title,
-        behavior.description,
-        behavior.meterBrand,
-        behavior.meterModel,
-        ...behavior.symptoms,
-      ].map((f) => f.toLowerCase());
-
-      if (matchFields.some((field) => field.includes(query))) {
-        searchResults.push({
-          id: `behavior-${behavior.id}`,
-          type: "behavior",
-          title: behavior.title,
-          subtitle: `${behavior.meterBrand} ${behavior.meterModel}`,
-          path: `/behavior/${behavior.id}`,
-        });
-      }
-    });
-
-    setResults(searchResults.slice(0, 10)); // Limit to 10 results
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, [searchTerm]);
 
   const handleSelect = (result: SearchResult) => {
@@ -165,10 +243,16 @@ export function GlobalSearch() {
       >
         <Command>
           <CommandList>
-            {results.length === 0 && (
+            {isLoading && (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-sm text-muted-foreground">Searching...</span>
+              </div>
+            )}
+            {!isLoading && results.length === 0 && (
               <CommandEmpty>No results found for "{searchTerm}"</CommandEmpty>
             )}
-            {groupedResults.meters.length > 0 && (
+            {!isLoading && groupedResults.meters.length > 0 && (
               <CommandGroup heading="Meters">
                 {groupedResults.meters.map((result) => (
                   <CommandItem
@@ -187,7 +271,7 @@ export function GlobalSearch() {
                 ))}
               </CommandGroup>
             )}
-            {groupedResults.guides.length > 0 && (
+            {!isLoading && groupedResults.guides.length > 0 && (
               <CommandGroup heading="Guides">
                 {groupedResults.guides.map((result) => (
                   <CommandItem
@@ -206,7 +290,7 @@ export function GlobalSearch() {
                 ))}
               </CommandGroup>
             )}
-            {groupedResults.behaviors.length > 0 && (
+            {!isLoading && groupedResults.behaviors.length > 0 && (
               <CommandGroup heading="Issues">
                 {groupedResults.behaviors.map((result) => (
                   <CommandItem
