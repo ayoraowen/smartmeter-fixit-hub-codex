@@ -18,8 +18,8 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Edit, Save, X, Wrench, AlertTriangle, BookOpen } from "lucide-react";
-import { useState, useEffect } from "react";
+import { ArrowLeft, Edit, Save, X, Wrench, AlertTriangle, BookOpen, ChevronDown } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -46,6 +46,16 @@ export default function MeterDetail() {
   //the following works with the custom hook for comma separated input
   const featuresInput = useCommaSeparatedInput("")
   // End of custom hook usage
+
+  // Scroll hint state for Features card
+  const [showScrollHint, setShowScrollHint] = useState(true);
+  const scrollViewportRef = useRef<HTMLDivElement>(null);
+
+  const handleFeaturesScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const target = event.currentTarget;
+    const isAtBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 10;
+    setShowScrollHint(!isAtBottom);
+  };
 
   useEffect(() => {
     const fetchMeter = async () => {
@@ -549,8 +559,8 @@ export default function MeterDetail() {
               </CardTitle>
             </CardHeader>
             <CardContent className="h-40 relative pb-0">
-              <ScrollArea className="h-full">
-                <div className="flex flex-wrap gap-2 pr-3 pb-8">
+              <ScrollArea className="h-full" onScrollCapture={handleFeaturesScroll}>
+                <div className="flex flex-wrap gap-2 pr-3 pb-10">
                   {(Array.isArray(meter.features)
                     ? meter.features
                     : JSON.parse(meter.features || "[]")
@@ -561,7 +571,14 @@ export default function MeterDetail() {
                   ))}
                 </div>
               </ScrollArea>
-              <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-card to-transparent pointer-events-none z-10" />
+              {showScrollHint && (
+                <div className="absolute bottom-0 left-0 right-0 h-14 bg-gradient-to-t from-card via-card/90 to-transparent pointer-events-none z-10 flex items-end justify-center pb-1">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground animate-bounce">
+                    <ChevronDown className="h-3 w-3" />
+                    <span>Scroll</span>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
