@@ -125,7 +125,7 @@ export function useSearchCache() {
           type: "meter",
           title: `${meter.brand} ${meter.model}`,
           subtitle: meter.type,
-          path: `/meter/${meter.id}`,
+          path: `/directory/${meter.id}`,
         });
       }
     });
