@@ -1,7 +1,34 @@
 import { useState, useEffect, useCallback } from "react";
-import { getAllMeters, type Meter } from "@/data/meterData";
-import { getAllBehaviors, type MeterBehavior } from "@/data/behaviorData";
-import { getAllGuides, type Guide } from "@/data/guideData";
+import { getAllMeters } from "@/data/meterData";
+import { getAllBehaviors } from "@/data/behaviorData";
+import { getAllGuides } from "@/data/guideData";
+import { useAuth } from "@/contexts/AuthContext";
+
+function safeParseStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((v): v is string => typeof v === "string");
+  }
+
+  if (typeof value !== "string") return [];
+  const trimmed = value.trim();
+  if (!trimmed) return [];
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (Array.isArray(parsed)) {
+      return parsed.filter((v): v is string => typeof v === "string");
+    }
+    return [];
+  } catch {
+    // last resort: allow comma-separated strings
+    return trimmed.includes(",")
+      ? trimmed
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [trimmed];
+  }
+}
 
 export interface SearchResult {
   id: string;
@@ -12,10 +39,11 @@ export interface SearchResult {
 }
 
 interface CacheData {
-  meters: Meter[];
-  behaviors: MeterBehavior[];
-  guides: Guide[];
+  meters: any[];
+  behaviors: any[];
+  guides: any[];
   lastFetched: number;
+  authToken: string | null;
 }
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -23,14 +51,19 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 let globalCache: CacheData | null = null;
 
 export function useSearchCache() {
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsReady] = useState(!!globalCache);
 
   const fetchData = useCallback(async (force = false) => {
-    // Return cached data if still valid
+    const authToken =
+      localStorage.getItem("authToken") || localStorage.getItem("token");
+
+    // Return cached data if still valid (and auth context didn't change)
     if (
       !force &&
       globalCache &&
+      globalCache.authToken === authToken &&
       Date.now() - globalCache.lastFetched < CACHE_DURATION
     ) {
       setIsReady(true);
@@ -38,10 +71,15 @@ export function useSearchCache() {
     }
 
     setIsLoading(true);
-    const headers = {
+
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
     };
+
+    // Only attach Authorization if we actually have a token (avoid `Bearer null`)
+    if (authToken) {
+      headers.Authorization = `Bearer ${authToken}`;
+    }
 
     try {
       // Try to fetch from API first
@@ -66,6 +104,7 @@ export function useSearchCache() {
         behaviors,
         guides,
         lastFetched: Date.now(),
+        authToken,
       };
       setIsReady(true);
     } catch (error) {
@@ -76,6 +115,7 @@ export function useSearchCache() {
         behaviors: getAllBehaviors(),
         guides: getAllGuides(),
         lastFetched: Date.now(),
+        authToken,
       };
       setIsReady(true);
     } finally {
@@ -83,10 +123,10 @@ export function useSearchCache() {
     }
   }, []);
 
-  // Fetch on mount if cache is empty or stale
+  // Fetch on mount (and after login/logout) if cache is empty or stale
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, user]);
 
   const search = useCallback((query: string): SearchResult[] => {
     if (!globalCache || !query.trim()) return [];
@@ -95,35 +135,43 @@ export function useSearchCache() {
     const results: SearchResult[] = [];
 
     // Search meters
-    globalCache.meters.forEach((meter) => {
-      const matchFields = [
-        meter.brand,
-        meter.model,
-        meter.type,
-        ...(meter.features || []),
-      ].map((f) => (f || "").toLowerCase());
+    globalCache.meters.forEach((meter: any) => {
+      const brand = meter?.brand ?? "";
+      const model = meter?.model ?? "";
+      const meterType =
+        meter?.type ?? meter?.meter_type_code ?? meter?.connection_type ?? "";
+      const features = safeParseStringArray(meter?.features);
+
+      const matchFields = [brand, model, meterType, ...features].map((f) =>
+        (f || "").toLowerCase()
+      );
 
       if (matchFields.some((field) => field.includes(q))) {
         results.push({
           id: `meter-${meter.id}`,
           type: "meter",
-          title: `${meter.brand} ${meter.model}`,
-          subtitle: meter.type,
+          title: `${brand} ${model}`.trim() || `Meter ${meter.id}`,
+          subtitle: meterType || "Meter",
           path: `/directory/${meter.id}`,
         });
       }
     });
 
-    // Search behaviors - using local MeterBehavior structure
-    globalCache.behaviors.forEach((behavior) => {
-      const symptoms = Array.isArray(behavior.symptoms) ? behavior.symptoms : [];
+    // Search behaviors (API + local normalization)
+    globalCache.behaviors.forEach((behavior: any) => {
+      const meterBrand = behavior?.meterBrand || behavior?.meter?.brand || "";
+      const meterModel = behavior?.meterModel || behavior?.meter?.model || "";
+
+      const symptoms = safeParseStringArray(behavior?.symptoms);
+      const solutions = safeParseStringArray(behavior?.solutions);
 
       const matchFields = [
-        behavior.title,
-        behavior.description,
-        behavior.meterBrand || "",
-        behavior.meterModel || "",
+        behavior?.title,
+        behavior?.description,
+        meterBrand,
+        meterModel,
         ...symptoms,
+        ...solutions,
       ].map((f) => (f || "").toLowerCase());
 
       if (matchFields.some((field) => field.includes(q))) {
@@ -131,19 +179,22 @@ export function useSearchCache() {
           id: `behavior-${behavior.id}`,
           type: "behavior",
           title: behavior.title,
-          subtitle: `${behavior.meterBrand} ${behavior.meterModel}`.trim() || "Unknown meter",
-          path: `/behavior/${behavior.id}`,
+          subtitle: `${meterBrand} ${meterModel}`.trim() || "Unknown meter",
+          path: `/behaviors/${behavior.id}`,
         });
       }
     });
 
     // Search guides
-    globalCache.guides.forEach((guide) => {
+    globalCache.guides.forEach((guide: any) => {
+      const tags = safeParseStringArray(guide?.tags);
+
       const matchFields = [
-        guide.title,
-        guide.description,
-        guide.category,
-        guide.tags || "",
+        guide?.title,
+        guide?.description,
+        guide?.category,
+        guide?.difficulty,
+        ...tags,
       ].map((f) => (f || "").toLowerCase());
 
       if (matchFields.some((field) => field.includes(q))) {
@@ -151,8 +202,8 @@ export function useSearchCache() {
           id: `guide-${guide.id}`,
           type: "guide",
           title: guide.title,
-          subtitle: `${guide.category} • ${guide.difficulty}`,
-          path: `/guide/${guide.id}`,
+          subtitle: `${guide.category} • ${guide.difficulty}`.trim(),
+          path: `/guides/${guide.id}`,
         });
       }
     });
