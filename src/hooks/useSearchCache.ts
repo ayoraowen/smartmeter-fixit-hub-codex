@@ -1,30 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
-
-interface ApiBehavior {
-  id: number;
-  title: string;
-  description: string;
-  symptoms: string | string[];
-  meterBrand?: string;
-  meterModel?: string;
-}
-
-interface ApiMeter {
-  id: number;
-  brand: string;
-  model: string;
-  type: string;
-  features?: string[];
-}
-
-interface ApiGuide {
-  id: number;
-  title: string;
-  description: string;
-  category: string;
-  difficulty: string;
-  tags?: string;
-}
+import { getAllMeters, type Meter } from "@/data/meterData";
+import { getAllBehaviors, type MeterBehavior } from "@/data/behaviorData";
+import { getAllGuides, type Guide } from "@/data/guideData";
 
 export interface SearchResult {
   id: string;
@@ -35,9 +12,9 @@ export interface SearchResult {
 }
 
 interface CacheData {
-  meters: ApiMeter[];
-  behaviors: ApiBehavior[];
-  guides: ApiGuide[];
+  meters: Meter[];
+  behaviors: MeterBehavior[];
+  guides: Guide[];
   lastFetched: number;
 }
 
@@ -67,23 +44,22 @@ export function useSearchCache() {
     };
 
     try {
+      // Try to fetch from API first
       const [metersRes, behaviorsRes, guidesRes] = await Promise.all([
         fetch("https://localhost:3000/meters", { headers }).catch(() => null),
-        fetch("https://localhost:3000/behaviors", { headers }).catch(
-          () => null
-        ),
+        fetch("https://localhost:3000/behaviors", { headers }).catch(() => null),
         fetch("https://localhost:3000/guides", { headers }).catch(() => null),
       ]);
 
-      const meters: ApiMeter[] = metersRes?.ok
-        ? await metersRes.json()
-        : [];
-      const behaviors: ApiBehavior[] = behaviorsRes?.ok
-        ? await behaviorsRes.json()
-        : [];
-      const guides: ApiGuide[] = guidesRes?.ok
-        ? await guidesRes.json()
-        : [];
+      // Check if any API call succeeded
+      const apiMeters = metersRes?.ok ? await metersRes.json() : null;
+      const apiBehaviors = behaviorsRes?.ok ? await behaviorsRes.json() : null;
+      const apiGuides = guidesRes?.ok ? await guidesRes.json() : null;
+
+      // Use API data if available, otherwise fall back to local data
+      const meters = apiMeters || getAllMeters();
+      const behaviors = apiBehaviors || getAllBehaviors();
+      const guides = apiGuides || getAllGuides();
 
       globalCache = {
         meters,
@@ -93,7 +69,15 @@ export function useSearchCache() {
       };
       setIsReady(true);
     } catch (error) {
-      console.error("Failed to fetch search data:", error);
+      // If all API calls fail, use local data as fallback
+      console.warn("API fetch failed, using local data:", error);
+      globalCache = {
+        meters: getAllMeters(),
+        behaviors: getAllBehaviors(),
+        guides: getAllGuides(),
+        lastFetched: Date.now(),
+      };
+      setIsReady(true);
     } finally {
       setIsLoading(false);
     }
@@ -130,13 +114,9 @@ export function useSearchCache() {
       }
     });
 
-    // Search behaviors
+    // Search behaviors - using local MeterBehavior structure
     globalCache.behaviors.forEach((behavior) => {
-      const symptoms = Array.isArray(behavior.symptoms)
-        ? behavior.symptoms
-        : typeof behavior.symptoms === "string"
-        ? JSON.parse(behavior.symptoms || "[]")
-        : [];
+      const symptoms = Array.isArray(behavior.symptoms) ? behavior.symptoms : [];
 
       const matchFields = [
         behavior.title,
@@ -151,9 +131,7 @@ export function useSearchCache() {
           id: `behavior-${behavior.id}`,
           type: "behavior",
           title: behavior.title,
-          subtitle:
-            `${behavior.meterBrand || ""} ${behavior.meterModel || ""}`.trim() ||
-            "Unknown meter",
+          subtitle: `${behavior.meterBrand} ${behavior.meterModel}`.trim() || "Unknown meter",
           path: `/behavior/${behavior.id}`,
         });
       }
