@@ -141,7 +141,7 @@ export function GlobalSearch() {
                   </CommandGroup>
                 )}
                 {groupedResults.behavior.length > 0 && (
-                  <CommandGroup heading="Issues">
+                  <CommandGroup heading="Meter Behavior Issues">
                     {groupedResults.behavior.slice(0, 5).map((result) => (
                       <CommandItem
                         key={result.id}
