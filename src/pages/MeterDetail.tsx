@@ -28,24 +28,45 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import API_BASE_URL from "@/config/api";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
+// Validation schema for meter edit form
+const meterEditSchema = z.object({
+  model: z.string().trim().min(1, "Model is required").max(100, "Model must be less than 100 characters"),
+  brand: z.string().trim().min(1, "Brand is required").max(100, "Brand must be less than 100 characters"),
+  meter_type_code: z.string().max(50, "Meter type code must be less than 50 characters").optional(),
+  year_of_manufacture: z.coerce.number().min(1900, "Year must be after 1900").max(new Date().getFullYear() + 1, "Year cannot be in the future"),
+  connection_type: z.string().trim().min(1, "Connection type is required").max(100, "Connection type must be less than 100 characters"),
+  features: z.string().max(500, "Features must be less than 500 characters"),
+});
+
+type MeterEditFormData = z.infer<typeof meterEditSchema>;
 
 export default function MeterDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // API call to fetch meter details from backend
   const [meter, setMeter] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Edit mode state
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editedMeter, setEditedMeter] = useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  //the following works with the custom hook for comma separated input
-  const featuresInput = useCommaSeparatedInput("")
+  const form = useForm<MeterEditFormData>({
+    resolver: zodResolver(meterEditSchema),
+    defaultValues: {
+      model: "",
+      brand: "",
+      meter_type_code: "",
+      year_of_manufacture: new Date().getFullYear(),
+      connection_type: "",
+      features: "",
+    },
+  });
   // End of custom hook usage
 
   useEffect(() => {
@@ -62,6 +83,20 @@ export default function MeterDetail() {
         }
         const data = await response.json();
         setMeter(data);
+        
+        // Initialize form with fetched data
+        const features = Array.isArray(data.features)
+          ? data.features
+          : JSON.parse(data.features || "[]");
+          
+        form.reset({
+          model: data.model || "",
+          brand: data.brand || "",
+          meter_type_code: data.meter_type_code || "",
+          year_of_manufacture: data.year_of_manufacture || new Date().getFullYear(),
+          connection_type: data.connection_type || "",
+          features: features.join(", "),
+        });
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
@@ -72,40 +107,33 @@ export default function MeterDetail() {
     fetchMeter();
   }, [id]);
 
-  // Using local data for now
-  // const allMeters = getAllMeters();
-  // const meter = allMeters.find(m => m.id === Number(id));
-
-  // Handle edit mode toggle
-  // const handleEditToggle = () => {
-  //   if (!isEditMode) {
-  //     setEditedMeter({ ...meter });
-  //   }
-  //   setIsEditMode(!isEditMode);
-  // };
-
   const handleEditToggle = () => {
     if (!isEditMode) {
-      setEditedMeter({ ...meter });
-      const initialFeatures = (Array.isArray(meter.features) 
-      ? meter.features
-      : JSON.parse(meter.features || "[]"));//.join(', ');
-      featuresInput.setValue(initialFeatures.join(', '));
+      // Reset form to current meter values when entering edit mode
+      const features = Array.isArray(meter.features)
+        ? meter.features
+        : JSON.parse(meter.features || "[]");
+        
+      form.reset({
+        model: meter.model || "",
+        brand: meter.brand || "",
+        meter_type_code: meter.meter_type_code || "",
+        year_of_manufacture: meter.year_of_manufacture || new Date().getFullYear(),
+        connection_type: meter.connection_type || "",
+        features: features.join(", "),
+      });
     }
     setIsEditMode(!isEditMode);
-  }
-
-
-
-  //Handle input changes in edit mode
-  const handleInputChange = (field: string, value: string | string[]) => {//line 195 below was flagging error on featuresArray "Argument of type 'string[]' is not assignable to parameter of type 'string'" hence the previous commit after correction.
-    setEditedMeter((prev: any) => ({ ...prev, [field]: value }));
   };
 
-  //Handle save with API call
-  const handleSave = async () => {
+  const handleSave = async (data: MeterEditFormData) => {
     try {
-      const featuresArray = featuresInput.toArray();
+      setIsSaving(true);
+      const featuresArray = data.features
+        .split(',')
+        .map(f => f.trim())
+        .filter(f => f !== "");
+        
       const response = await fetch(`${API_BASE_URL}/meters/${id}`, {
         method: 'PUT',
         headers: {
@@ -113,12 +141,12 @@ export default function MeterDetail() {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         },
         body: JSON.stringify({
-          brand: editedMeter.brand,
-          model: editedMeter.model,
-          connection_type: editedMeter.connection_type,
-          year_of_manufacture: parseInt(editedMeter.year_of_manufacture),
-          features: featuresArray,//editedMeter.features
-          meter_type_code: editedMeter.meter_type_code || null, // Handle empty string or null
+          brand: data.brand,
+          model: data.model,
+          connection_type: data.connection_type,
+          year_of_manufacture: data.year_of_manufacture,
+          features: featuresArray,
+          meter_type_code: data.meter_type_code || null,
         }),
       });
   
@@ -139,12 +167,13 @@ export default function MeterDetail() {
         description: err instanceof Error ? err.message : "Failed to update meter",
         variant: "destructive",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  //Handle cancel edit
   const handleCancel = () => {
-    setEditedMeter(null);
+    form.reset();
     setIsEditMode(false);
   };
 
@@ -464,77 +493,103 @@ export default function MeterDetail() {
             <CardHeader>
               <CardTitle className="text-lg">Edit Meter Details</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="model">Model</Label>
-                  <Input
-                    id="model"
-                    value={editedMeter.model}
-                    onChange={(e) => handleInputChange('model', e.target.value)}
-                    placeholder="Model"
-                  />
-                </div>
-                {meter.meter_type_code?.trim() && (
-                  <div className="space-y-2">
-                    <Label htmlFor="meter_type_code">Meter Type Code</Label>
-                    <Input
-                      id="meter_type_code"
-                      value={editedMeter.meter_type_code}
-                      onChange={(e) => handleInputChange('meter_type_code', e.target.value)}
-                      placeholder="Meter Type Code"
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleSave)} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="model"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Model</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Model" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {meter.meter_type_code?.trim() && (
+                      <FormField
+                        control={form.control}
+                        name="meter_type_code"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Meter Type Code</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Meter Type Code" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    <FormField
+                      control={form.control}
+                      name="brand"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Brand</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Brand" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="year_of_manufacture"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Year of Manufacture</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" placeholder="Year" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="connection_type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Connection Type</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Connection Type" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="features"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Features (comma-separated)</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Feature 1, Feature 2, Feature 3" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                   </div>
-                )}
-                <div className="space-y-2">
-                  <Label htmlFor="brand">Brand</Label>
-                  <Input
-                    id="brand"
-                    value={editedMeter.brand}
-                    onChange={(e) => handleInputChange('brand', e.target.value)}
-                    placeholder="Brand"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="year">Year of Manufacture</Label>
-                  <Input
-                    id="year"
-                    value={editedMeter.year_of_manufacture}
-                    onChange={(e) => handleInputChange('year_of_manufacture', e.target.value)}
-                    placeholder="Year"
-                    type="number"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="connection_type">Connection Type</Label>
-                  <Input
-                    id="connection_type"
-                    value={editedMeter.connection_type}
-                    onChange={(e) => handleInputChange('connection_type', e.target.value)}
-                    placeholder="Connection Type"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="features">Features (comma-separated)</Label>
-                  <Input
-                    id="features"
-                    value={featuresInput.value}
-                    onChange={featuresInput.handleChange}
-                    onKeyDown={featuresInput.handleKeyDown}
-                    placeholder="Feature 1, Feature 2, Feature 3"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button onClick={handleSave}>
-                  <Save className="h-4 w-4 mr-1" />
-                  Save Changes
-                </Button>
-                <Button variant="outline" onClick={handleCancel}>
-                  <X className="h-4 w-4 mr-1" />
-                  Cancel
-                </Button>
-              </div>
+                  <div className="flex gap-2 pt-4">
+                    <Button type="submit" disabled={isSaving}>
+                      <Save className="h-4 w-4 mr-1" />
+                      {isSaving ? "Saving..." : "Save Changes"}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={handleCancel}>
+                      <X className="h-4 w-4 mr-1" />
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </Form>
             </CardContent>
           </Card>
         )}

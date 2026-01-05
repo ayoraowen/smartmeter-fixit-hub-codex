@@ -12,24 +12,40 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Edit, Save, X, Plus, Minus } from "lucide-react";
 import API_BASE_URL from "@/config/api";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
 
+// Validation schema for behavior edit form
+const behaviorEditSchema = z.object({
+  description: z.string().trim().min(10, "Description must be at least 10 characters").max(1000, "Description must be less than 1000 characters"),
+  symptoms: z.array(z.string().trim().min(1, "Symptom cannot be empty")).min(1, "At least one symptom is required"),
+  solutions: z.array(z.string().trim().min(1, "Solution cannot be empty")).min(1, "At least one solution is required"),
+});
 
+type BehaviorEditFormData = z.infer<typeof behaviorEditSchema>;
 
 export default function BehaviorDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   
-  // For API implementation:
   const [behavior, setBehavior] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-//   const [editData, setEditData] = useState({
-//   description: "",
-//   symptoms: [] as string[],
-//   solutions: [] as string[],
-// });
-const [editData, setEditData] = useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const form = useForm<BehaviorEditFormData>({
+    resolver: zodResolver(behaviorEditSchema),
+    defaultValues: {
+      description: "",
+      symptoms: [],
+      solutions: [],
+    },
+  });
 
 
   
@@ -48,18 +64,20 @@ const [editData, setEditData] = useState<any>(null);
         if (!response.ok) throw new Error('Failed to fetch behavior');
         const data = await response.json();
         setBehavior(data);
-        setEditData({
-          //title: data.title || "",
-
-  description: data.description || "",
-  symptoms: Array.isArray(data.symptoms)
-    ? data.symptoms
-    : JSON.parse(data.symptoms || "[]"),
-  solutions: Array.isArray(data.solutions)
-    ? data.solutions
-    : JSON.parse(data.solutions || "[]"),
-});
-
+        
+        // Initialize form with fetched data
+        const symptoms = Array.isArray(data.symptoms)
+          ? data.symptoms
+          : JSON.parse(data.symptoms || "[]");
+        const solutions = Array.isArray(data.solutions)
+          ? data.solutions
+          : JSON.parse(data.solutions || "[]");
+          
+        form.reset({
+          description: data.description || "",
+          symptoms: symptoms,
+          solutions: solutions,
+        });
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
@@ -68,66 +86,78 @@ const [editData, setEditData] = useState<any>(null);
     };
     fetchBehavior();
   }, [id]);
-  
-  // For now, using local data:
-  // const behavior = getBehaviorById(id || "");
 
-  const updateListItem = (field: "symptoms" | "solutions", index: number, value: string) => {
-  setEditData(prev => {
-    const arr = [...prev[field]];
-    arr[index] = value;
-    return { ...prev, [field]: arr };
-  });
-};
+  const handleStartEdit = () => {
+    setIsEditing(true);
+  };
 
-const addListItem = (field: "symptoms" | "solutions") => {
-  setEditData(prev => ({
-    ...prev,
-    [field]: [...prev[field], ""],
-  }));
-};
-
-const removeListItem = (field: "symptoms" | "solutions", index: number) => {
-  setEditData(prev => {
-    const arr = prev[field].filter((_, i) => i !== index);
-    return { ...prev, [field]: arr };
-  });
-};
-
-const handleSave = async () => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/behaviors/${id}`, {
-      method: "PUT",//or PUT based on your API
-      headers: {
-        "Content-Type": "application/json",
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-      },
-      body: JSON.stringify({
-        title: behavior.title,
-        meter_id: behavior.meter_id,
-        description: editData.description,
-        symptoms: editData.symptoms,
-        solutions: editData.solutions,
-        reported_by: behavior.reported_by,
-        // created_at: behavior.created_at,//not permitted to change in backend permitted params
-      }
-        
-        ),
+  const handleCancelEdit = () => {
+    // Reset form to original behavior data
+    const symptoms = Array.isArray(behavior.symptoms)
+      ? behavior.symptoms
+      : JSON.parse(behavior.symptoms || "[]");
+    const solutions = Array.isArray(behavior.solutions)
+      ? behavior.solutions
+      : JSON.parse(behavior.solutions || "[]");
+      
+    form.reset({
+      description: behavior.description || "",
+      symptoms: symptoms,
+      solutions: solutions,
     });
-
-    if (!response.ok) throw new Error("Failed to save");
-
-    const updated = await response.json();
-
-    setBehavior(updated);
     setIsEditing(false);
-    console.log("Changes saved", updated);
-  } catch (error) {
-    console.error(error);
-    alert("Could not save changes");
-  }
-};
+  };
 
+  const addListItem = (field: "symptoms" | "solutions") => {
+    const currentValues = form.getValues(field);
+    form.setValue(field, [...currentValues, ""], { shouldValidate: true });
+  };
+
+  const removeListItem = (field: "symptoms" | "solutions", index: number) => {
+    const currentValues = form.getValues(field);
+    const newValues = currentValues.filter((_, i) => i !== index);
+    form.setValue(field, newValues, { shouldValidate: true });
+  };
+
+  const handleSave = async (data: BehaviorEditFormData) => {
+    try {
+      setIsSaving(true);
+      const response = await fetch(`${API_BASE_URL}/behaviors/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: JSON.stringify({
+          title: behavior.title,
+          meter_id: behavior.meter_id,
+          description: data.description,
+          symptoms: data.symptoms.filter(s => s.trim() !== ""),
+          solutions: data.solutions.filter(s => s.trim() !== ""),
+          reported_by: behavior.reported_by,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to save");
+
+      const updated = await response.json();
+      setBehavior(updated);
+      setIsEditing(false);
+      toast({
+        title: "Success",
+        description: "Behavior updated successfully",
+      });
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Error",
+        description: "Could not save changes",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
 
 if (isLoading) {
@@ -313,6 +343,9 @@ if (isLoading) {
   //   </Layout>
   // );
 
+  const symptoms = form.watch("symptoms");
+  const solutions = form.watch("solutions");
+
   return (
   <Layout>
     <div className="container mx-auto px-4 py-8">
@@ -330,15 +363,15 @@ if (isLoading) {
       {/* Edit / Save button */}
       <div className="flex justify-end mb-4">
         {!isEditing ? (
-          <Button onClick={() => setIsEditing(true)}>
+          <Button onClick={handleStartEdit}>
             <Edit className="mr-2 h-4 w-4" /> Edit
           </Button>
         ) : (
           <div className="flex gap-3">
-            <Button onClick={handleSave}>
-              <Save className="mr-2 h-4 w-4" /> Save
+            <Button onClick={form.handleSubmit(handleSave)} disabled={isSaving}>
+              <Save className="mr-2 h-4 w-4" /> {isSaving ? "Saving..." : "Save"}
             </Button>
-            <Button variant="outline" onClick={() => setIsEditing(false)}>
+            <Button variant="outline" onClick={handleCancelEdit}>
               <X className="mr-2 h-4 w-4" /> Cancel
             </Button>
           </div>
@@ -376,13 +409,24 @@ if (isLoading) {
           {!isEditing ? (
             <p className="text-muted-foreground">{behavior.description}</p>
           ) : (
-            <Textarea
-              value={editData.description}
-              onChange={(e) =>
-                setEditData({ ...editData, description: e.target.value })
-              }
-              className="min-h-[120px]"
-            />
+            <Form {...form}>
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        className="min-h-[120px]"
+                        placeholder="Enter behavior description..."
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </Form>
           )}
         </Card>
 
@@ -395,33 +439,49 @@ if (isLoading) {
 
           {!isEditing ? (
             <ul className="space-y-2">
-              {editData.symptoms.map((s, i) => (
+              {symptoms.map((s, i) => (
                 <li key={i} className="flex gap-2">
                   <span className="text-destructive">•</span> {s}
                 </li>
               ))}
             </ul>
           ) : (
-            <div className="space-y-4">
-              {editData.symptoms.map((s, i) => (
-                <div key={i} className="flex gap-3">
-                  <Input
-                    value={s}
-                    onChange={(e) => updateListItem("symptoms", i, e.target.value)}
+            <Form {...form}>
+              <div className="space-y-4">
+                {symptoms.map((s, i) => (
+                  <FormField
+                    key={i}
+                    control={form.control}
+                    name={`symptoms.${i}`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex gap-3">
+                          <FormControl>
+                            <Input {...field} placeholder="Enter symptom..." />
+                          </FormControl>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            onClick={() => removeListItem("symptoms", i)}
+                            disabled={symptoms.length <= 1}
+                          >
+                            <Minus />
+                          </Button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => removeListItem("symptoms", i)}
-                  >
-                    <Minus />
-                  </Button>
-                </div>
-              ))}
-              <Button size="sm" onClick={() => addListItem("symptoms")}>
-                <Plus className="mr-2 h-4 w-4" /> Add Symptom
-              </Button>
-            </div>
+                ))}
+                {form.formState.errors.symptoms?.message && (
+                  <p className="text-sm font-medium text-destructive">{form.formState.errors.symptoms.message}</p>
+                )}
+                <Button type="button" size="sm" onClick={() => addListItem("symptoms")}>
+                  <Plus className="mr-2 h-4 w-4" /> Add Symptom
+                </Button>
+              </div>
+            </Form>
           )}
         </Card>
 
@@ -434,33 +494,49 @@ if (isLoading) {
 
           {!isEditing ? (
             <ol className="space-y-2">
-              {editData.solutions.map((s, i) => (
+              {solutions.map((s, i) => (
                 <li key={i} className="flex gap-2">
                   <span className="font-semibold">{i + 1}.</span> {s}
                 </li>
               ))}
             </ol>
           ) : (
-            <div className="space-y-4">
-              {editData.solutions.map((s, i) => (
-                <div key={i} className="flex gap-3">
-                  <Input
-                    value={s}
-                    onChange={(e) => updateListItem("solutions", i, e.target.value)}
+            <Form {...form}>
+              <div className="space-y-4">
+                {solutions.map((s, i) => (
+                  <FormField
+                    key={i}
+                    control={form.control}
+                    name={`solutions.${i}`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex gap-3">
+                          <FormControl>
+                            <Input {...field} placeholder="Enter solution..." />
+                          </FormControl>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            onClick={() => removeListItem("solutions", i)}
+                            disabled={solutions.length <= 1}
+                          >
+                            <Minus />
+                          </Button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => removeListItem("solutions", i)}
-                  >
-                    <Minus />
-                  </Button>
-                </div>
-              ))}
-              <Button size="sm" onClick={() => addListItem("solutions")}>
-                <Plus className="mr-2 h-4 w-4" /> Add Solution
-              </Button>
-            </div>
+                ))}
+                {form.formState.errors.solutions?.message && (
+                  <p className="text-sm font-medium text-destructive">{form.formState.errors.solutions.message}</p>
+                )}
+                <Button type="button" size="sm" onClick={() => addListItem("solutions")}>
+                  <Plus className="mr-2 h-4 w-4" /> Add Solution
+                </Button>
+              </div>
+            </Form>
           )}
         </Card>
 
