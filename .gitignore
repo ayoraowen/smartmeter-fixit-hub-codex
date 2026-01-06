@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+#ignore ssl/tls certificates
+*.key
+*.crt
+certs/
+oldcerts/
+
