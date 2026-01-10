@@ -517,6 +517,7 @@ export default function MeterDetail() {
             )}
           </div>
           <p className="text-lg text-primary font-medium">{meter.brand}</p>
+          <p className="text-sm text-muted-foreground mt-1">Year: {meter.year_of_manufacture}</p>
         </div>
 
         {/* Edit Mode Form */}
