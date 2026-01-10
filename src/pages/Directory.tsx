@@ -138,7 +138,7 @@ export default function Directory() {
                   Loading meters...
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Fetching the latest smart meter data
+                  Fetching the latest meter data
                 </p>
               </div>
               <Progress value={66} className="h-2" />
