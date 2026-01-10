@@ -24,6 +24,7 @@ interface ApiFetchedMeter {
   updated_at: string;
   user_id: number;
   meter_type_code: string;
+  year_of_manufacture: string; 
 }
 
 const behaviorSchema = z.object({
@@ -241,10 +242,10 @@ console.log(data.meterId)
                     meters.map((meter) => (
                       meter.meter_type_code?.trim() ? 
                       <SelectItem key={meter.id} value={meter.id.toString()}>
-                        {meter.brand} - {meter.model} - {meter.meter_type_code}
+                        {meter.brand} | {meter.model} | {meter.meter_type_code} | {meter.year_of_manufacture}
                       </SelectItem> :
                       <SelectItem key={meter.id} value={meter.id.toString()}>
-                        {meter.brand} - {meter.model}
+                        {meter.brand} | {meter.model} | {meter.year_of_manufacture}
                       </SelectItem>
                     ))
                   )}
