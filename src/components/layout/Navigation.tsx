@@ -8,7 +8,7 @@ const navItems = [
   { to: "/behaviors", label: "Behaviour Guides", icon: Activity },
   { to: "/error-codes", label: "Error Codes", icon: AlertCircle },
   { to: "/guides", label: "Troubleshooting Guides", icon: Book },
-  { to: "/community", label: "Community", icon: Users },
+  // { to: "/community", label: "Community", icon: Users },
 ];
 
 export function Navigation() {
