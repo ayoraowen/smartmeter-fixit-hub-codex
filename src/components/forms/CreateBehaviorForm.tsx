@@ -94,10 +94,17 @@ export function CreateBehaviorForm() {
   });
 
   const addSymptom = () => {
-    if (symptomInput.trim() && symptoms.length < 10) {
-      setSymptoms([...symptoms, symptomInput.trim()]);
-      setSymptomInput("");
+    const nextSymptoms = symptomInput
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    if (nextSymptoms.length === 0 || symptoms.length >= 10) {
+      return;
     }
+
+    setSymptoms([...symptoms, ...nextSymptoms].slice(0, 10));
+    setSymptomInput("");
   };
 
   const removeSymptom = (index: number) => {
@@ -105,10 +112,17 @@ export function CreateBehaviorForm() {
   };
 
   const addSolution = () => {
-    if (solutionInput.trim() && solutions.length < 10) {
-      setSolutions([...solutions, solutionInput.trim()]);
-      setSolutionInput("");
+    const nextSolutions = solutionInput
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    if (nextSolutions.length === 0 || solutions.length >= 10) {
+      return;
     }
+
+    setSolutions([...solutions, ...nextSolutions].slice(0, 10));
+    setSolutionInput("");
   };
 
   const removeSolution = (index: number) => {
@@ -315,11 +329,11 @@ console.log(data.meterId)
         <div className="space-y-2">
           <FormLabel>Symptoms</FormLabel>
           <div className="flex gap-2">
-            <Input
-              placeholder="Add a symptom"
+            <Textarea
+              placeholder="Add symptom(s), one per line"
               value={symptomInput}
               onChange={(e) => setSymptomInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSymptom())}
+              className="min-h-[80px]"
             />
             <Button type="button" onClick={addSymptom} variant="secondary">
               Add
@@ -328,7 +342,7 @@ console.log(data.meterId)
           <div className="space-y-2 mt-2">
             {symptoms.map((symptom, index) => (
               <div key={index} className="flex items-center gap-2 bg-secondary/50 p-2 rounded">
-                <span className="flex-1 text-sm">{symptom}</span>
+                <span className="flex-1 text-sm whitespace-pre-line">{symptom}</span>
                 <Button
                   type="button"
                   variant="ghost"
@@ -345,11 +359,11 @@ console.log(data.meterId)
         <div className="space-y-2">
           <FormLabel>Solutions</FormLabel>
           <div className="flex gap-2">
-            <Input
-              placeholder="Add a solution"
+            <Textarea
+              placeholder="Add solution(s), one per line"
               value={solutionInput}
               onChange={(e) => setSolutionInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSolution())}
+              className="min-h-[80px]"
             />
             <Button type="button" onClick={addSolution} variant="secondary">
               Add
@@ -358,7 +372,7 @@ console.log(data.meterId)
           <div className="space-y-2 mt-2">
             {solutions.map((solution, index) => (
               <div key={index} className="flex items-center gap-2 bg-secondary/50 p-2 rounded">
-                <span className="flex-1 text-sm">{solution}</span>
+                <span className="flex-1 text-sm whitespace-pre-line">{solution}</span>
                 <Button
                   type="button"
                   variant="ghost"
