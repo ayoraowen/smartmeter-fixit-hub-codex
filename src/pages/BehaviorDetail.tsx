@@ -467,7 +467,7 @@ if (isLoading) {
           <h2 className="text-xl font-semibold mb-4">Description</h2>
 
           {!isEditing ? (
-            <p className="text-muted-foreground">{behavior.description}</p>
+            <p className="text-muted-foreground whitespace-pre-line">{behavior.description}</p>
           ) : (
             <Form {...form}>
               <FormField
@@ -501,7 +501,8 @@ if (isLoading) {
             <ul className="space-y-2">
               {symptoms.map((s, i) => (
                 <li key={i} className="flex gap-2">
-                  <span className="text-destructive">•</span> {s}
+                  <span className="text-destructive">•</span>
+                  <span className="whitespace-pre-line">{s}</span>
                 </li>
               ))}
             </ul>
@@ -517,7 +518,11 @@ if (isLoading) {
                       <FormItem>
                         <div className="flex gap-3">
                           <FormControl>
-                            <Input {...field} placeholder="Enter symptom..." />
+                            <Textarea
+                              {...field}
+                              placeholder="Enter symptom..."
+                              className="min-h-[80px]"
+                            />
                           </FormControl>
                           <Button
                             type="button"
@@ -556,7 +561,8 @@ if (isLoading) {
             <ol className="space-y-2">
               {solutions.map((s, i) => (
                 <li key={i} className="flex gap-2">
-                  <span className="font-semibold">{i + 1}.</span> {s}
+                  <span className="font-semibold">{i + 1}.</span>
+                  <span className="whitespace-pre-line">{s}</span>
                 </li>
               ))}
             </ol>
@@ -572,7 +578,11 @@ if (isLoading) {
                       <FormItem>
                         <div className="flex gap-3">
                           <FormControl>
-                            <Input {...field} placeholder="Enter solution..." />
+                            <Textarea
+                              {...field}
+                              placeholder="Enter solution..."
+                              className="min-h-[80px]"
+                            />
                           </FormControl>
                           <Button
                             type="button"
