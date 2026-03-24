@@ -27,6 +27,58 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+type SimulationRow = {
+  scenario: string;
+  register: string;
+  startReadings: string;
+  stopReadings: string;
+  consumption: string;
+  remarks: string;
+};
+
+const parseSimulationLine = (line: string): SimulationRow | null => {
+  const rowMatch = line.match(
+    /^(.*?):\s*([0-9]+\.[0-9]+\.[0-9]+)\s*Start Readings\s*-\s*([^,]+),\s*Stop Readings\s*-\s*([^,]+),\s*Consumption\s*-\s*([^,]+),\s*Remarks\s*(.+)$/i,
+  );
+
+  if (!rowMatch) return null;
+
+  const [, scenario, register, startReadings, stopReadings, consumption, remarks] = rowMatch;
+  return {
+    scenario: scenario.trim(),
+    register: register.trim(),
+    startReadings: startReadings.trim(),
+    stopReadings: stopReadings.trim(),
+    consumption: consumption.trim(),
+    remarks: remarks.trim(),
+  };
+};
+
+const parseSimulationSymptomRows = (symptoms: string[]): SimulationRow[] => {
+  const normalizedLines = symptoms
+    .flatMap((symptom) => symptom.split("\n"))
+    .map((line) => line.replace(/^[•\-\s]+/, "").trim())
+    .filter((line) => line.length > 0);
+
+  return normalizedLines.reduce<SimulationRow[]>((rows, line) => {
+    const parsedRow = parseSimulationLine(line);
+    if (parsedRow) rows.push(parsedRow);
+    return rows;
+  }, []);
+};
+
+const getUnparsedSymptomEntries = (symptoms: string[]): string[] => {
+  return symptoms.filter((symptom) => {
+    const normalizedLines = symptom
+      .split("\n")
+      .map((line) => line.replace(/^[•\-\s]+/, "").trim())
+      .filter((line) => line.length > 0);
+
+    return !normalizedLines.some((line) => parseSimulationLine(line));
+  });
+};
 
 // Validation schema for behavior edit form
 const behaviorEditSchema = z.object({
@@ -369,6 +421,8 @@ if (isLoading) {
 
   const symptoms = form.watch("symptoms");
   const solutions = form.watch("solutions");
+  const simulationRows = parseSimulationSymptomRows(symptoms);
+  const unparsedSymptoms = getUnparsedSymptomEntries(symptoms);
 
   return (
   <Layout>
@@ -467,7 +521,7 @@ if (isLoading) {
           <h2 className="text-xl font-semibold mb-4">Description</h2>
 
           {!isEditing ? (
-            <p className="text-muted-foreground">{behavior.description}</p>
+            <p className="text-muted-foreground whitespace-pre-line">{behavior.description}</p>
           ) : (
             <Form {...form}>
               <FormField
@@ -494,17 +548,49 @@ if (isLoading) {
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle className="h-5 w-5 text-destructive" />
-            <h2 className="text-xl font-semibold">Symptoms</h2>
+            <h2 className="text-xl font-semibold">Symptoms/Simulation Notes</h2>
           </div>
 
           {!isEditing ? (
-            <ul className="space-y-2">
-              {symptoms.map((s, i) => (
-                <li key={i} className="flex gap-2">
-                  <span className="text-destructive">•</span> {s}
-                </li>
-              ))}
-            </ul>
+            <div className="space-y-4">
+              {simulationRows.length > 0 && (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Scenario</TableHead>
+                      <TableHead>Register</TableHead>
+                      <TableHead>Start Readings</TableHead>
+                      <TableHead>Stop Readings</TableHead>
+                      <TableHead>Consumption</TableHead>
+                      <TableHead>Remarks</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {simulationRows.map((row, index) => (
+                      <TableRow key={`${row.scenario}-${row.register}-${index}`}>
+                        <TableCell>{row.scenario}</TableCell>
+                        <TableCell>{row.register}</TableCell>
+                        <TableCell>{row.startReadings}</TableCell>
+                        <TableCell>{row.stopReadings}</TableCell>
+                        <TableCell>{row.consumption}</TableCell>
+                        <TableCell>{row.remarks}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+
+              {unparsedSymptoms.length > 0 && (
+                <ul className="space-y-2">
+                  {unparsedSymptoms.map((s, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="text-destructive">•</span>
+                      <span className="whitespace-pre-line">{s}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           ) : (
             <Form {...form}>
               <div className="space-y-4">
@@ -517,7 +603,11 @@ if (isLoading) {
                       <FormItem>
                         <div className="flex gap-3">
                           <FormControl>
-                            <Input {...field} placeholder="Enter symptom..." />
+                            <Textarea
+                              {...field}
+                              placeholder="Enter symptom..."
+                              className="min-h-[80px]"
+                            />
                           </FormControl>
                           <Button
                             type="button"
@@ -549,14 +639,15 @@ if (isLoading) {
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
             <CheckCircle className="h-5 w-5 text-green-600" />
-            <h2 className="text-xl font-semibold">Solutions</h2>
+            <h2 className="text-xl font-semibold">Solutions/Final Remarks</h2>
           </div>
 
           {!isEditing ? (
             <ol className="space-y-2">
               {solutions.map((s, i) => (
                 <li key={i} className="flex gap-2">
-                  <span className="font-semibold">{i + 1}.</span> {s}
+                  <span className="font-semibold">{i + 1}.</span>
+                  <span className="whitespace-pre-line">{s}</span>
                 </li>
               ))}
             </ol>
@@ -572,7 +663,11 @@ if (isLoading) {
                       <FormItem>
                         <div className="flex gap-3">
                           <FormControl>
-                            <Input {...field} placeholder="Enter solution..." />
+                            <Textarea
+                              {...field}
+                              placeholder="Enter solution..."
+                              className="min-h-[80px]"
+                            />
                           </FormControl>
                           <Button
                             type="button"
