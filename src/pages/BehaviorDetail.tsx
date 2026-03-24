@@ -494,7 +494,7 @@ if (isLoading) {
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle className="h-5 w-5 text-destructive" />
-            <h2 className="text-xl font-semibold">Symptoms</h2>
+            <h2 className="text-xl font-semibold">Symptoms/Simulation Notes</h2>
           </div>
 
           {!isEditing ? (
@@ -554,7 +554,7 @@ if (isLoading) {
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
             <CheckCircle className="h-5 w-5 text-green-600" />
-            <h2 className="text-xl font-semibold">Solutions</h2>
+            <h2 className="text-xl font-semibold">Solutions/Final Remarks</h2>
           </div>
 
           {!isEditing ? (
