@@ -498,8 +498,8 @@ if (isLoading) {
             </Form>
           )}
           {behavior.meter?.meter_type_code?.trim() ? 
-          <p className="text-sm text-muted-foreground mb-2"> {behavior.meter?.brand} | {behavior.meter?.model} | {behavior.meter?.meter_type_code} | {behavior.meter?.year_of_manufacture} </p> : 
-          <p className="text-sm text-muted-foreground mb-2"> {behavior.meter?.brand} | {behavior.meter?.model} | {behavior.meter?.year_of_manufacture} </p>
+          <p className="text-sm text-muted-foreground mb-2"> {behavior.meter?.brand} | {behavior.meter?.model} | {behavior.meter?.meter_type_code} | Year of Manufacture: {behavior.meter?.year_of_manufacture} </p> : 
+          <p className="text-sm text-muted-foreground mb-2"> {behavior.meter?.brand} | {behavior.meter?.model} | Year of Manufacture: {behavior.meter?.year_of_manufacture} </p>
           }
           <div className="text-sm text-muted-foreground flex gap-4">
             <div className="flex items-center gap-1">
