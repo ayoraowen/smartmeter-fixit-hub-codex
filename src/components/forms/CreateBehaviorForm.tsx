@@ -133,8 +133,8 @@ export function CreateBehaviorForm() {
     
       if (symptoms.length === 0) {
         toast({
-          title: "Missing symptoms",
-          description: "Please add at least one symptom",
+          title: "Missing symptoms/Simulation notes",
+          description: "Please add at least one symptom/Simulation note",
           variant: "destructive",
         });
         return;
@@ -142,8 +142,8 @@ export function CreateBehaviorForm() {
 
       if (solutions.length === 0) {
         toast({
-          title: "Missing solutions",
-          description: "Please add at least one solution",
+          title: "Missing solutions/Final remarks",
+          description: "Please add at least one solution/Final remark",
           variant: "destructive",
         });
         return;
@@ -327,10 +327,10 @@ console.log(data.meterId)
         />
 
         <div className="space-y-2">
-          <FormLabel>Symptoms</FormLabel>
+          <FormLabel>Symptoms/Simulation Notes</FormLabel>
           <div className="flex gap-2">
             <Textarea
-              placeholder="Add symptom(s), one per line"
+              placeholder="Add symptom(s)/simulation note(s), one per line"
               value={symptomInput}
               onChange={(e) => setSymptomInput(e.target.value)}
               className="min-h-[80px]"
@@ -357,10 +357,10 @@ console.log(data.meterId)
         </div>
 
         <div className="space-y-2">
-          <FormLabel>Solutions</FormLabel>
+          <FormLabel>Solutions/Final Remarks</FormLabel>
           <div className="flex gap-2">
             <Textarea
-              placeholder="Add solution(s), one per line"
+              placeholder="Add solution(s)/final remark(s), one per line"
               value={solutionInput}
               onChange={(e) => setSolutionInput(e.target.value)}
               className="min-h-[80px]"
