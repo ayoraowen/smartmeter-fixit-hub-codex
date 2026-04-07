@@ -256,10 +256,10 @@ console.log(data.meterId)
                     meters.map((meter) => (
                       meter.meter_type_code?.trim() ? 
                       <SelectItem key={meter.id} value={meter.id.toString()}>
-                        {meter.brand} | {meter.model} | {meter.meter_type_code} | {meter.year_of_manufacture}
+                        {meter.brand} | {meter.model} | {meter.meter_type_code} | Year of Manufacture: {meter.year_of_manufacture}
                       </SelectItem> :
                       <SelectItem key={meter.id} value={meter.id.toString()}>
-                        {meter.brand} | {meter.model} | {meter.year_of_manufacture}
+                        {meter.brand} | {meter.model} | Year of Manufacture: {meter.year_of_manufacture}
                       </SelectItem>
                     ))
                   )}
