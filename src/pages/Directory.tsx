@@ -194,7 +194,7 @@ export default function Directory() {
                     <p className="text-sm text-primary font-medium">
                       {meter.brand}
                     </p>
-                    <p className="text-xs text-muted-foreground">Year: {meter.year_of_manufacture}</p>
+                    <p className="text-xs text-muted-foreground">Year of Manufacture: {meter.year_of_manufacture}</p>
                   </div>
                   <Badge variant="secondary">{meter.connection_type}</Badge>
                 </div>
