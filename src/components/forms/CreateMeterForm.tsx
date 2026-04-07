@@ -281,7 +281,7 @@ export function CreateMeterForm() {
           name="year_of_manufacture"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Year of Manufacture (optional)</FormLabel>
+              <FormLabel>Year of Manufacture</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., 2024" {...field} />
               </FormControl>
