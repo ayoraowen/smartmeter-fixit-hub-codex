@@ -271,8 +271,8 @@ console.log(filteredBehaviors.map(b => b.symptoms.length))
                     </div>
                     {/* <p className="text-sm text-muted-foreground mb-2"> */}
                       {behavior.meter?.meter_type_code?.trim() ? 
-                      <p className="text-sm text-muted-foreground mb-2"> {behavior.meter?.brand} | {behavior.meter?.model} | {behavior.meter?.meter_type_code} | {behavior.meter?.year_of_manufacture} </p> : 
-                      <p className="text-sm text-muted-foreground mb-2"> {behavior.meter?.brand} | {behavior.meter?.model} | {behavior.meter?.year_of_manufacture}</p>}
+                      <p className="text-sm text-muted-foreground mb-2"> {behavior.meter?.brand} | {behavior.meter?.model} | {behavior.meter?.meter_type_code} | Year of Manufacture: {behavior.meter?.year_of_manufacture} </p> : 
+                      <p className="text-sm text-muted-foreground mb-2"> {behavior.meter?.brand} | {behavior.meter?.model} | Year of Manufacture: {behavior.meter?.year_of_manufacture}</p>}
                       {/* {behavior.meter?.brand} - {behavior.meter?.model} */}
                       {/* For API: {behavior.meter?.brand} - {behavior.meter?.model} */}
                     {/* </p> */}
