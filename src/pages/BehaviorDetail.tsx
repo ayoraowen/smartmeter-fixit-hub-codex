@@ -548,7 +548,7 @@ if (isLoading) {
 
         {/* DESCRIPTION */}
         <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Description</h2>
+          <h2 className="text-xl font-semibold mb-4">Meter Behavior Description</h2>
 
           {!isEditing ? (
             <p className="text-muted-foreground whitespace-pre-line">{behavior.description}</p>
