@@ -516,6 +516,36 @@ if (isLoading) {
           </div>
         </Card>
 
+        {/* --- Meter Detail Card (commented out) --- */}
+        {behavior.meter && (
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Meter Details</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="font-medium text-muted-foreground">Brand:</span>
+                <span className="ml-2">{behavior.meter.brand}</span>
+              </div>
+              <div>
+                <span className="font-medium text-muted-foreground">Model:</span>
+                <span className="ml-2">{behavior.meter.model}</span>
+              </div>
+              {behavior.meter.meter_type_code?.trim() && (
+                <div>
+                  <span className="font-medium text-muted-foreground">Type Code:</span>
+                  <span className="ml-2">{behavior.meter.meter_type_code}</span>
+                </div>
+              )}
+              {behavior.meter.year_of_manufacture && (
+                <div>
+                  <span className="font-medium text-muted-foreground">Year of Manufacture:</span>
+                  <span className="ml-2">{behavior.meter.year_of_manufacture}</span>
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
+        {/* --- End Meter Detail Card --- */}
+
         {/* DESCRIPTION */}
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Description</h2>
