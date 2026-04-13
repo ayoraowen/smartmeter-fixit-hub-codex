@@ -23,7 +23,7 @@ export function HeroSection() {
     {
       icon: Users,
       title: "Expert Community",
-      description: "Technican staff-verified solutions and best practices"
+      description: "Technical staff-verified solutions and best practices"
     }
   ];
 
