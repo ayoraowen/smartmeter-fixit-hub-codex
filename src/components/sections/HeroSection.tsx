@@ -13,7 +13,7 @@ export function HeroSection() {
     {
       icon: BookOpen,
       title: "Step-by-Step Guides",
-      description: "Detailed troubleshooting procedures with visual aids"
+      description: "Detailed troubleshooting procedures"
     },
     {
       icon: Zap,
@@ -23,7 +23,7 @@ export function HeroSection() {
     {
       icon: Users,
       title: "Expert Community",
-      description: "Technician-verified solutions and best practices"
+      description: "Technican staff-verified solutions and best practices"
     }
   ];
 
@@ -36,7 +36,7 @@ export function HeroSection() {
             <span className="block text-primary">Troubleshooting Hub</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-8">
-            The comprehensive resource for technicians, utility staff, and customers to resolve energy meter issues quickly and efficiently.
+            The MCL comprehensive resource for utility staff to resolve customer energy meter issues quickly and efficiently.
           </p>
           
           {/* Hero Search */}
