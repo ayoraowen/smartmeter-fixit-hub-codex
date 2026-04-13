@@ -541,6 +541,12 @@ if (isLoading) {
                   <span className="ml-2">{behavior.meter.year_of_manufacture}</span>
                 </div>
               )}
+              {behavior.meter.connection_type && (
+                <div>
+                  <span className="font-medium text-muted-foreground">Connection Type:</span>
+                  <span className="ml-2">{behavior.meter.connection_type}</span>
+                </div>
+              )}
             </div>
           </Card>
         )}
