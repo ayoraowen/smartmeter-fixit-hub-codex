@@ -32,6 +32,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 type SimulationRow = {
   scenario: string;
   register: string;
+  injectedKwh: string;
   startReadings: string;
   stopReadings: string;
   consumption: string;
@@ -40,15 +41,16 @@ type SimulationRow = {
 
 const parseSimulationLine = (line: string): SimulationRow | null => {
   const rowMatch = line.match(
-    /^(.*?):\s*([0-9]+\.[0-9]+\.[0-9]+)\s*Start Readings\s*-\s*([^,]+),\s*Stop Readings\s*-\s*([^,]+),\s*Consumption\s*-\s*([^,]+),\s*Remarks\s*(.+)$/i,
+    /^(.*?):\s*([0-9]+\.[0-9]+\.[0-9]+)\s*(?:Injected kWh\s*-\s*([^,]+),\s*)?Start Readings\s*-\s*([^,]+),\s*Stop Readings\s*-\s*([^,]+),\s*Consumption\s*-\s*([^,]+),\s*Remarks\s*(.+)$/i,
   );
 
   if (!rowMatch) return null;
 
-  const [, scenario, register, startReadings, stopReadings, consumption, remarks] = rowMatch;
+  const [, scenario, register, injectedKwh, startReadings, stopReadings, consumption, remarks] = rowMatch;
   return {
     scenario: scenario.trim(),
     register: register.trim(),
+    injectedKwh: injectedKwh?.trim() || "",
     startReadings: startReadings.trim(),
     stopReadings: stopReadings.trim(),
     consumption: consumption.trim(),
@@ -595,6 +597,7 @@ if (isLoading) {
                     <TableRow>
                       <TableHead>Scenario</TableHead>
                       <TableHead>Register</TableHead>
+                      <TableHead>Injected kWh</TableHead>
                       <TableHead>Start Readings</TableHead>
                       <TableHead>Stop Readings</TableHead>
                       <TableHead>Consumption</TableHead>
@@ -606,6 +609,7 @@ if (isLoading) {
                       <TableRow key={`${row.scenario}-${row.register}-${index}`}>
                         <TableCell>{row.scenario}</TableCell>
                         <TableCell>{row.register}</TableCell>
+                        <TableCell>{row.injectedKwh}</TableCell>
                         <TableCell>{row.startReadings}</TableCell>
                         <TableCell>{row.stopReadings}</TableCell>
                         <TableCell>{row.consumption}</TableCell>
