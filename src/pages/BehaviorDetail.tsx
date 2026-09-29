@@ -28,59 +28,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-
-type SimulationRow = {
-  scenario: string;
-  register: string;
-  injectedKwh: string;
-  startReadings: string;
-  stopReadings: string;
-  consumption: string;
-  remarks: string;
-};
-
-const parseSimulationLine = (line: string): SimulationRow | null => {
-  const rowMatch = line.match(
-    /^(.*?):\s*([0-9]+\.[0-9]+\.[0-9]+)\s*(?:Injected kWh\s*-\s*([^,]+),\s*)?Start Readings\s*-\s*([^,]+),\s*Stop Readings\s*-\s*([^,]+),\s*Consumption\s*-\s*([^,]+),\s*Remarks\s*(.+)$/i,
-  );
-
-  if (!rowMatch) return null;
-
-  const [, scenario, register, injectedKwh, startReadings, stopReadings, consumption, remarks] = rowMatch;
-  return {
-    scenario: scenario.trim(),
-    register: register.trim(),
-    injectedKwh: injectedKwh?.trim() || "",
-    startReadings: startReadings.trim(),
-    stopReadings: stopReadings.trim(),
-    consumption: consumption.trim(),
-    remarks: remarks.trim(),
-  };
-};
-
-const parseSimulationSymptomRows = (symptoms: string[]): SimulationRow[] => {
-  const normalizedLines = symptoms
-    .flatMap((symptom) => symptom.split("\n"))
-    .map((line) => line.replace(/^[•\-\s]+/, "").trim())
-    .filter((line) => line.length > 0);
-
-  return normalizedLines.reduce<SimulationRow[]>((rows, line) => {
-    const parsedRow = parseSimulationLine(line);
-    if (parsedRow) rows.push(parsedRow);
-    return rows;
-  }, []);
-};
-
-const getUnparsedSymptomEntries = (symptoms: string[]): string[] => {
-  return symptoms.filter((symptom) => {
-    const normalizedLines = symptom
-      .split("\n")
-      .map((line) => line.replace(/^[•\-\s]+/, "").trim())
-      .filter((line) => line.length > 0);
-
-    return !normalizedLines.some((line) => parseSimulationLine(line));
-  });
-};
+import { getUnparsedSymptomEntries, parseSimulationSymptomRows } from "@/lib/simulation";
 
 // Validation schema for behavior edit form
 const behaviorEditSchema = z.object({

@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -6,12 +6,18 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { saveBehavior } from "@/data/behaviorData";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Plus } from "lucide-react";
 import API_BASE_URL from "@/config/api";
+import {
+  REGISTER_PATTERN,
+  SIMULATION_COLUMNS,
+  emptySimulationRow,
+  formatSimulationRow,
+} from "@/lib/simulation";
 
 //interface needed for fetched meters so that we can populate the meter dropdown and have proper typing
 interface ApiFetchedMeter {
@@ -27,11 +33,29 @@ interface ApiFetchedMeter {
   year_of_manufacture: string; 
 }
 
+// Commas separate the fields when a row is stored as text, so values between
+// the register and the remarks cannot contain them.
+const withoutCommas = (label: string) =>
+  z.string().trim().refine((value) => !value.includes(","), `${label} cannot contain commas`);
+const requiredWithoutCommas = (label: string) =>
+  withoutCommas(label).refine((value) => value.length > 0, `${label} is required`);
+
+const simulationRowSchema = z.object({
+  scenario: z.string().trim().min(1, "Scenario is required"),
+  register: z.string().trim().regex(REGISTER_PATTERN, "Use a register code such as 1.8.0"),
+  injectedKwh: withoutCommas("Injected kWh"),
+  startReadings: requiredWithoutCommas("Start readings"),
+  stopReadings: requiredWithoutCommas("Stop readings"),
+  consumption: requiredWithoutCommas("Consumption"),
+  remarks: z.string().trim(),
+});
+
 const behaviorSchema = z.object({
   meterId: z.string().min(1, "Please select a meter"),
   title: z.string().min(3, "Title must be at least 3 characters").max(100),
   description: z.string().min(10, "Description must be at least 10 characters").max(500),
   severity: z.enum(["low", "medium", "high", "critical"]),
+  simulationRows: z.array(simulationRowSchema).min(1, "Add at least one simulation row"),
   reportedBy: z.string().max(100).optional(),
 });
 
@@ -40,8 +64,6 @@ type BehaviorFormData = z.infer<typeof behaviorSchema>;
 export function CreateBehaviorForm() {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [symptoms, setSymptoms] = useState<string[]>([]);
-  const [symptomInput, setSymptomInput] = useState("");
   const [solutions, setSolutions] = useState<string[]>([]);
   const [solutionInput, setSolutionInput] = useState("");
   const [meters, setMeters] = useState<ApiFetchedMeter[]>([]);
@@ -89,27 +111,12 @@ export function CreateBehaviorForm() {
       title: "",
       description: "",
       severity: "medium",
+      simulationRows: [emptySimulationRow()],
       reportedBy: "",
     },
   });
 
-  const addSymptom = () => {
-    const nextSymptoms = symptomInput
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter(Boolean);
-
-    if (nextSymptoms.length === 0 || symptoms.length >= 10) {
-      return;
-    }
-
-    setSymptoms([...symptoms, ...nextSymptoms].slice(0, 10));
-    setSymptomInput("");
-  };
-
-  const removeSymptom = (index: number) => {
-    setSymptoms(symptoms.filter((_, i) => i !== index));
-  };
+  const simulationRows = useFieldArray({ control: form.control, name: "simulationRows" });
 
   const addSolution = () => {
     const nextSolutions = solutionInput
@@ -131,15 +138,6 @@ export function CreateBehaviorForm() {
 
   const onSubmit = async (data: BehaviorFormData) => {
     
-      if (symptoms.length === 0) {
-        toast({
-          title: "Missing symptoms/Simulation notes",
-          description: "Please add at least one symptom/Simulation note",
-          variant: "destructive",
-        });
-        return;
-      }
-
       if (solutions.length === 0) {
         toast({
           title: "Missing solutions/Final remarks",
@@ -168,7 +166,7 @@ export function CreateBehaviorForm() {
             title: data.title,
             description: data.description,
             // severity: data.severity,
-            symptoms: symptoms,
+            symptoms: data.simulationRows.map(formatSimulationRow),
             
             solutions: solutions,
             reported_by: data.reportedBy,
@@ -328,32 +326,77 @@ console.log(data.meterId)
 
         <div className="space-y-2">
           <FormLabel>Symptoms/Simulation Notes</FormLabel>
-          <div className="flex gap-2">
-            <Textarea
-              placeholder="Add symptom(s)/simulation note(s), one per line"
-              value={symptomInput}
-              onChange={(e) => setSymptomInput(e.target.value)}
-              className="min-h-[80px]"
-            />
-            <Button type="button" onClick={addSymptom} variant="secondary">
-              Add
-            </Button>
+          <p className="text-sm text-muted-foreground">
+            One row per scenario tested. Injected kWh and Remarks are optional.
+          </p>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  {SIMULATION_COLUMNS.map((column) => (
+                    <TableHead key={column.key} className="whitespace-nowrap">
+                      {column.label}
+                    </TableHead>
+                  ))}
+                  <TableHead className="w-10">
+                    <span className="sr-only">Remove row</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {simulationRows.fields.map((row, rowIndex) => (
+                  <TableRow key={row.id}>
+                    {SIMULATION_COLUMNS.map((column) => (
+                      <TableCell key={column.key} className="p-2 align-top">
+                        <FormField
+                          control={form.control}
+                          name={`simulationRows.${rowIndex}.${column.key}`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  aria-label={`${column.label}, row ${rowIndex + 1}`}
+                                  placeholder={column.key === "register" ? "1.8.0" : undefined}
+                                  className={column.key === "remarks" ? "min-w-[12rem]" : "min-w-[7rem]"}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </TableCell>
+                    ))}
+                    <TableCell className="p-2 align-top">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Remove row ${rowIndex + 1}`}
+                        onClick={() => simulationRows.remove(rowIndex)}
+                        disabled={simulationRows.fields.length <= 1}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
-          <div className="space-y-2 mt-2">
-            {symptoms.map((symptom, index) => (
-              <div key={index} className="flex items-center gap-2 bg-secondary/50 p-2 rounded">
-                <span className="flex-1 text-sm whitespace-pre-line">{symptom}</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeSymptom(index)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
+          {form.formState.errors.simulationRows?.root?.message && (
+            <p className="text-sm font-medium text-destructive">
+              {form.formState.errors.simulationRows.root.message}
+            </p>
+          )}
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => simulationRows.append(emptySimulationRow())}
+          >
+            <Plus className="mr-2 h-4 w-4" /> Add row
+          </Button>
         </div>
 
         <div className="space-y-2">
