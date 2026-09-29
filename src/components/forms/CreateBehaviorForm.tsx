@@ -1,4 +1,4 @@
-import { useFieldArray, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -6,18 +6,17 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { X, Loader2, Plus } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import API_BASE_URL from "@/config/api";
 import {
   REGISTER_PATTERN,
-  SIMULATION_COLUMNS,
   emptySimulationRow,
   formatSimulationRow,
 } from "@/lib/simulation";
+import { SimulationTableEditor } from "./SimulationTableEditor";
 
 //interface needed for fetched meters so that we can populate the meter dropdown and have proper typing
 interface ApiFetchedMeter {
@@ -115,8 +114,6 @@ export function CreateBehaviorForm() {
       reportedBy: "",
     },
   });
-
-  const simulationRows = useFieldArray({ control: form.control, name: "simulationRows" });
 
   const addSolution = () => {
     const nextSolutions = solutionInput
@@ -326,77 +323,7 @@ console.log(data.meterId)
 
         <div className="space-y-2">
           <FormLabel>Symptoms/Simulation Notes</FormLabel>
-          <p className="text-sm text-muted-foreground">
-            One row per scenario tested. Injected kWh and Remarks are optional.
-          </p>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {SIMULATION_COLUMNS.map((column) => (
-                    <TableHead key={column.key} className="whitespace-nowrap">
-                      {column.label}
-                    </TableHead>
-                  ))}
-                  <TableHead className="w-10">
-                    <span className="sr-only">Remove row</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {simulationRows.fields.map((row, rowIndex) => (
-                  <TableRow key={row.id}>
-                    {SIMULATION_COLUMNS.map((column) => (
-                      <TableCell key={column.key} className="p-2 align-top">
-                        <FormField
-                          control={form.control}
-                          name={`simulationRows.${rowIndex}.${column.key}`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  aria-label={`${column.label}, row ${rowIndex + 1}`}
-                                  placeholder={column.key === "register" ? "1.8.0" : undefined}
-                                  className={column.key === "remarks" ? "min-w-[12rem]" : "min-w-[7rem]"}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </TableCell>
-                    ))}
-                    <TableCell className="p-2 align-top">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Remove row ${rowIndex + 1}`}
-                        onClick={() => simulationRows.remove(rowIndex)}
-                        disabled={simulationRows.fields.length <= 1}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          {form.formState.errors.simulationRows?.root?.message && (
-            <p className="text-sm font-medium text-destructive">
-              {form.formState.errors.simulationRows.root.message}
-            </p>
-          )}
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={() => simulationRows.append(emptySimulationRow())}
-          >
-            <Plus className="mr-2 h-4 w-4" /> Add row
-          </Button>
+          <SimulationTableEditor />
         </div>
 
         <div className="space-y-2">

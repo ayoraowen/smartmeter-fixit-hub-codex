@@ -91,3 +91,118 @@ export const getUnparsedSymptomEntries = (symptoms: string[]): string[] => {
     return !normalizedLines.some((line) => parseSimulationLine(line));
   });
 };
+
+// ---- Pasting from a spreadsheet ----------------------------------------------
+
+// Excel and Google Sheets copy cells as tab-separated text, one line per row.
+// A cell containing a tab, newline or quote is wrapped in quotes, with inner
+// quotes doubled.
+export const parseClipboardTable = (text: string): string[][] => {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (inQuotes) {
+      if (char === '"' && text[i + 1] === '"') {
+        cell += '"';
+        i++;
+      } else if (char === '"') {
+        inQuotes = false;
+      } else {
+        cell += char;
+      }
+    } else if (char === '"' && cell === "") {
+      inQuotes = true;
+    } else if (char === "\t") {
+      row.push(cell);
+      cell = "";
+    } else if (char === "\n" || char === "\r") {
+      if (char === "\r" && text[i + 1] === "\n") i++;
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = "";
+    } else {
+      cell += char;
+    }
+  }
+  if (cell !== "" || row.length > 0) {
+    row.push(cell);
+    rows.push(row);
+  }
+  return rows;
+};
+
+const normalizeHeader = (value: string) =>
+  value.toLowerCase().replace(/[^a-z0-9]/g, "").replace(/s$/, "");
+
+const COLUMN_BY_HEADER = new Map(
+  SIMULATION_COLUMNS.map((column) => [normalizeHeader(column.label), column.key]),
+);
+
+const NUMERIC_COLUMNS: (keyof SimulationRow)[] = [
+  "injectedKwh",
+  "startReadings",
+  "stopReadings",
+  "consumption",
+];
+
+// Spreadsheets copy numbers as displayed, e.g. 1,200.5. Remove the thousands
+// separators; anything else with a comma is left for validation to flag.
+const THOUSANDS_SEPARATED = /^-?\d{1,3}(,\d{3})+(\.\d+)?$/;
+const cleanCell = (key: keyof SimulationRow, value: string) => {
+  const trimmed = value.replace(/\s*\r?\n\s*/g, " ").trim();
+  return NUMERIC_COLUMNS.includes(key) && THOUSANDS_SEPARATED.test(trimmed)
+    ? trimmed.replace(/,/g, "")
+    : trimmed;
+};
+
+export type PastedTable = {
+  rows: Partial<SimulationRow>[];
+  usedHeader: boolean;
+  matchedColumns: string[];
+  ignoredColumns: string[];
+};
+
+// With a header row, columns are matched by name in any order and unknown ones
+// are ignored. Without one, cells fill the table from startColumn, like Excel.
+export const mapPastedTable = (cells: string[][], startColumn: number): PastedTable => {
+  const nonBlank = cells.filter((row) => row.some((cell) => cell.trim() !== ""));
+  if (nonBlank.length === 0) {
+    return { rows: [], usedHeader: false, matchedColumns: [], ignoredColumns: [] };
+  }
+
+  const [first, ...rest] = nonBlank;
+  const headerKeys = first.map((cell) => COLUMN_BY_HEADER.get(normalizeHeader(cell)));
+  const filledHeaderCells = first.filter((cell) => cell.trim() !== "").length;
+  const matchCount = headerKeys.filter(Boolean).length;
+  const usedHeader = matchCount >= 2 || (matchCount >= 1 && matchCount === filledHeaderCells);
+
+  const keys: (keyof SimulationRow | undefined)[] = usedHeader
+    ? headerKeys
+    : first.map((_, index) => SIMULATION_COLUMNS[startColumn + index]?.key);
+  const dataRows = usedHeader ? rest : nonBlank;
+
+  const rows = dataRows.map((row) => {
+    const mapped: Partial<SimulationRow> = {};
+    keys.forEach((key, index) => {
+      if (key) mapped[key] = cleanCell(key, row[index] ?? "");
+    });
+    return mapped;
+  });
+
+  const labelFor = (key: keyof SimulationRow) =>
+    SIMULATION_COLUMNS.find((column) => column.key === key)?.label ?? key;
+
+  return {
+    rows,
+    usedHeader,
+    matchedColumns: keys.filter((key): key is keyof SimulationRow => !!key).map(labelFor),
+    ignoredColumns: usedHeader
+      ? first.filter((cell, index) => !headerKeys[index] && cell.trim() !== "").map((cell) => cell.trim())
+      : [],
+  };
+};
