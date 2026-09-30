@@ -11,11 +11,8 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import API_BASE_URL from "@/config/api";
-import {
-  REGISTER_PATTERN,
-  emptySimulationRow,
-  formatSimulationRow,
-} from "@/lib/simulation";
+import { DEFAULT_HEADINGS, emptySimulationRow, joinSimulationSymptoms } from "@/lib/simulation";
+import { simulationHeadingsSchema, simulationRowSchema } from "@/lib/simulationSchema";
 import { SimulationTableEditor } from "./SimulationTableEditor";
 
 //interface needed for fetched meters so that we can populate the meter dropdown and have proper typing
@@ -32,29 +29,13 @@ interface ApiFetchedMeter {
   year_of_manufacture: string; 
 }
 
-// Commas separate the fields when a row is stored as text, so values between
-// the register and the remarks cannot contain them.
-const withoutCommas = (label: string) =>
-  z.string().trim().refine((value) => !value.includes(","), `${label} cannot contain commas`);
-const requiredWithoutCommas = (label: string) =>
-  withoutCommas(label).refine((value) => value.length > 0, `${label} is required`);
-
-const simulationRowSchema = z.object({
-  scenario: z.string().trim().min(1, "Scenario is required"),
-  register: z.string().trim().regex(REGISTER_PATTERN, "Use a register code such as 1.8.0"),
-  injectedKwh: withoutCommas("Injected kWh"),
-  startReadings: requiredWithoutCommas("Start readings"),
-  stopReadings: requiredWithoutCommas("Stop readings"),
-  consumption: requiredWithoutCommas("Consumption"),
-  remarks: z.string().trim(),
-});
-
 const behaviorSchema = z.object({
   meterId: z.string().min(1, "Please select a meter"),
   title: z.string().min(3, "Title must be at least 3 characters").max(100),
   description: z.string().min(10, "Description must be at least 10 characters").max(500),
   severity: z.enum(["low", "medium", "high", "critical"]),
   simulationRows: z.array(simulationRowSchema).min(1, "Add at least one simulation row"),
+  simulationHeadings: simulationHeadingsSchema,
   reportedBy: z.string().max(100).optional(),
 });
 
@@ -111,6 +92,7 @@ export function CreateBehaviorForm() {
       description: "",
       severity: "medium",
       simulationRows: [emptySimulationRow()],
+      simulationHeadings: [...DEFAULT_HEADINGS],
       reportedBy: "",
     },
   });
@@ -163,7 +145,11 @@ export function CreateBehaviorForm() {
             title: data.title,
             description: data.description,
             // severity: data.severity,
-            symptoms: data.simulationRows.map(formatSimulationRow),
+            symptoms: joinSimulationSymptoms({
+              headings: data.simulationHeadings,
+              rows: data.simulationRows,
+              notes: [],
+            }),
             
             solutions: solutions,
             reported_by: data.reportedBy,

@@ -8,14 +8,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import {
+  DEFAULT_HEADINGS,
+  HEADING_MAX_LENGTH,
   SIMULATION_COLUMNS,
   SimulationRow,
   emptySimulationRow,
   mapPastedTable,
+  normalizeHeadings,
   parseClipboardTable,
 } from "@/lib/simulation";
 
-type SimulationForm = { simulationRows: SimulationRow[] };
+type SimulationForm = { simulationRows: SimulationRow[]; simulationHeadings: string[] };
 
 const cellSelector = (row: number, column: number) => `[data-simulation-cell="${row}-${column}"]`;
 
@@ -25,11 +28,14 @@ const focusCell = (row: number, column: number) =>
   setTimeout(() => document.querySelector<HTMLInputElement>(cellSelector(row, column))?.focus());
 
 // A spreadsheet-style editor for the simulation results table. It must sit
-// inside a <Form> whose values include `simulationRows`.
-export function SimulationTableEditor() {
+// inside a <Form> whose values include `simulationRows` and `simulationHeadings`.
+// With allowEmpty, the last row can be removed (used when editing a record that
+// may have no table).
+export function SimulationTableEditor({ allowEmpty = false }: { allowEmpty?: boolean }) {
   const form = useFormContext<SimulationForm>();
   const rows = useFieldArray({ control: form.control, name: "simulationRows" });
   const { toast } = useToast();
+  const headings = normalizeHeadings(form.watch("simulationHeadings"));
 
   const handlePaste = (event: ClipboardEvent<HTMLInputElement>, rowIndex: number, columnIndex: number) => {
     const text = event.clipboardData.getData("text/plain");
@@ -37,7 +43,7 @@ export function SimulationTableEditor() {
     if (!/[\t\n]/.test(text.replace(/\r?\n$/, ""))) return;
     event.preventDefault();
 
-    const pasted = mapPastedTable(parseClipboardTable(text), columnIndex);
+    const pasted = mapPastedTable(parseClipboardTable(text), columnIndex, headings);
     if (pasted.rows.length === 0) return;
 
     const next = [...form.getValues("simulationRows")];
@@ -78,9 +84,9 @@ export function SimulationTableEditor() {
   const rowErrors = form.formState.errors.simulationRows;
   const cellMessages = Array.isArray(rowErrors)
     ? rowErrors.flatMap((rowError, rowIndex) =>
-        SIMULATION_COLUMNS.flatMap((column) => {
+        SIMULATION_COLUMNS.flatMap((column, columnIndex) => {
           const message = rowError?.[column.key]?.message;
-          return message ? [`Row ${rowIndex + 1}, ${column.label}: ${message}`] : [];
+          return message ? [`Row ${rowIndex + 1}, ${headings[columnIndex]}: ${message}`] : [];
         }),
       )
     : [];
@@ -91,7 +97,7 @@ export function SimulationTableEditor() {
       <p className="text-sm text-muted-foreground">
         Paste straight from Excel: copy the cells including the heading row, click the first
         cell here and press Ctrl+V. Columns can be in any order. Enter moves down, Tab moves
-        across. Injected kWh and Remarks are optional.
+        across. Click a heading to rename it. The third and last columns are optional.
       </p>
 
       <div className="rounded-md border">
@@ -99,9 +105,34 @@ export function SimulationTableEditor() {
           <TableHeader className="bg-muted/50">
             <TableRow>
               <TableHead className="w-10 border-r text-center">#</TableHead>
-              {SIMULATION_COLUMNS.map((column) => (
-                <TableHead key={column.key} className="h-9 whitespace-nowrap border-r px-3">
-                  {column.label}
+              {SIMULATION_COLUMNS.map((column, columnIndex) => (
+                <TableHead key={column.key} className="h-9 border-r p-0">
+                  <FormField
+                    control={form.control}
+                    name={`simulationHeadings.${columnIndex}`}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        value={field.value ?? ""}
+                        maxLength={HEADING_MAX_LENGTH}
+                        aria-label={`Heading for column ${columnIndex + 1} (${column.label})`}
+                        title="Click to rename this column"
+                        // Widen the column to fit its heading; the cells below stretch with it.
+                        style={{ minWidth: `calc(${(field.value ?? "").length}ch + 2rem)` }}
+                        onBlur={() => {
+                          // A blank heading goes back to the default name.
+                          if (!field.value?.trim()) field.onChange(DEFAULT_HEADINGS[columnIndex]);
+                          field.onBlur();
+                        }}
+                        className={cn(
+                          "h-9 rounded-none border-0 bg-transparent px-3 font-medium text-muted-foreground shadow-none",
+                          "hover:bg-muted focus-visible:bg-background focus-visible:text-foreground",
+                          "focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-offset-0",
+                          column.key === "scenario" || column.key === "remarks" ? "min-w-[14rem]" : "min-w-[7rem]",
+                        )}
+                      />
+                    )}
+                  />
                 </TableHead>
               ))}
               <TableHead className="w-10">
@@ -131,7 +162,7 @@ export function SimulationTableEditor() {
                                 if (fieldState.error) void form.trigger(field.name);
                               }}
                               data-simulation-cell={`${rowIndex}-${columnIndex}`}
-                              aria-label={`${column.label}, row ${rowIndex + 1}`}
+                              aria-label={`${headings[columnIndex]}, row ${rowIndex + 1}`}
                               title={fieldState.error?.message}
                               placeholder={column.key === "register" ? "1.8.0" : undefined}
                               onPaste={(event) => handlePaste(event, rowIndex, columnIndex)}
@@ -159,7 +190,7 @@ export function SimulationTableEditor() {
                     className="h-9 w-9"
                     aria-label={`Remove row ${rowIndex + 1}`}
                     onClick={() => rows.remove(rowIndex)}
-                    disabled={rows.fields.length <= 1}
+                    disabled={!allowEmpty && rows.fields.length <= 1}
                   >
                     <X className="h-4 w-4" />
                   </Button>

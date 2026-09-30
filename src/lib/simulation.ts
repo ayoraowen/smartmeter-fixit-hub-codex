@@ -1,6 +1,10 @@
 // Simulation results are stored in a behavior's `symptoms` array as one line of
 // text per table row. formatSimulationRow writes that line and parseSimulationLine
 // reads it back, so the create form and the detail page must both use this file.
+//
+// The row lines always use the fixed keywords below ("Start Readings - …"), so
+// renaming a column never changes how rows are stored. Headings a person has
+// renamed are stored separately, as one "Table headings:" line.
 
 export type SimulationRow = {
   scenario: string;
@@ -31,6 +35,34 @@ export const emptySimulationRow = (): SimulationRow => ({
   consumption: "",
   remarks: "",
 });
+
+// ---- Column headings ---------------------------------------------------------
+
+export const DEFAULT_HEADINGS = SIMULATION_COLUMNS.map((column) => column.label);
+
+const HEADINGS_PREFIX = "Table headings:";
+const HEADINGS_LINE = /^\s*Table headings:\s*(.*)$/i;
+export const HEADING_MAX_LENGTH = 40;
+
+export const isHeadingsLine = (line: string) => HEADINGS_LINE.test(line);
+
+// Blank or missing headings fall back to the default for that column.
+export const normalizeHeadings = (headings: readonly string[] | undefined): string[] =>
+  DEFAULT_HEADINGS.map((fallback, index) => headings?.[index]?.trim() || fallback);
+
+const parseHeadingsLine = (line: string): string[] | null => {
+  const match = line.match(HEADINGS_LINE);
+  return match ? normalizeHeadings(match[1].split("|")) : null;
+};
+
+// Returns null when the headings are the defaults, so nothing extra is stored.
+export const formatHeadingsLine = (headings: readonly string[]): string | null => {
+  const normalized = normalizeHeadings(headings).map((heading) =>
+    heading.replace(/[|\r\n]+/g, " ").trim(),
+  );
+  const isDefault = normalized.every((heading, index) => heading === DEFAULT_HEADINGS[index]);
+  return isDefault ? null : `${HEADINGS_PREFIX} ${normalized.join(" | ")}`;
+};
 
 // Register codes are three dot-separated numbers, e.g. 1.8.0
 export const REGISTER_PATTERN = /^[0-9]+\.[0-9]+\.[0-9]+$/;
@@ -68,29 +100,54 @@ export const formatSimulationRow = (row: SimulationRow): string => {
   ].join("").trimEnd();
 };
 
-export const parseSimulationSymptomRows = (symptoms: string[]): SimulationRow[] => {
-  const normalizedLines = symptoms
-    .flatMap((symptom) => symptom.split("\n"))
-    .map((line) => line.replace(/^[•\-\s]+/, "").trim())
-    .filter((line) => line.length > 0);
+const normalizeLine = (line: string) => line.replace(/^[•\-\s]+/, "").trim();
 
-  return normalizedLines.reduce<SimulationRow[]>((rows, line) => {
-    const parsedRow = parseSimulationLine(line);
-    if (parsedRow) rows.push(parsedRow);
-    return rows;
-  }, []);
+export type SimulationSymptoms = {
+  headings: string[];
+  rows: SimulationRow[];
+  // Anything that is not a table row or the headings line, kept as written.
+  notes: string[];
 };
 
-export const getUnparsedSymptomEntries = (symptoms: string[]): string[] => {
-  return symptoms.filter((symptom) => {
-    const normalizedLines = symptom
-      .split("\n")
-      .map((line) => line.replace(/^[•\-\s]+/, "").trim())
-      .filter((line) => line.length > 0);
+// Splits a behavior's symptoms into the table and any free-text notes. An entry
+// that mixes table rows and other text keeps its other lines as a note, so
+// saving it back loses nothing.
+export const splitSimulationSymptoms = (symptoms: string[]): SimulationSymptoms => {
+  let headings = [...DEFAULT_HEADINGS];
+  const rows: SimulationRow[] = [];
+  const notes: string[] = [];
 
-    return !normalizedLines.some((line) => parseSimulationLine(line));
-  });
+  for (const symptom of symptoms) {
+    const leftover: string[] = [];
+    for (const line of symptom.split(/\r?\n/)) {
+      const normalized = normalizeLine(line);
+      const parsedHeadings = parseHeadingsLine(normalized);
+      const parsedRow = parsedHeadings ? null : parseSimulationLine(normalized);
+      if (parsedHeadings) headings = parsedHeadings;
+      else if (parsedRow) rows.push(parsedRow);
+      else leftover.push(line);
+    }
+    const note = leftover.join("\n").trim();
+    if (note) notes.push(note);
+  }
+
+  return { headings, rows, notes };
 };
+
+export const joinSimulationSymptoms = ({ headings, rows, notes }: SimulationSymptoms): string[] => {
+  const headingsLine = rows.length > 0 ? formatHeadingsLine(headings) : null;
+  return [
+    ...(headingsLine ? [headingsLine] : []),
+    ...rows.map(formatSimulationRow),
+    ...notes.map((note) => note.trim()).filter(Boolean),
+  ];
+};
+
+export const parseSimulationSymptomRows = (symptoms: string[]): SimulationRow[] =>
+  splitSimulationSymptoms(symptoms).rows;
+
+export const getUnparsedSymptomEntries = (symptoms: string[]): string[] =>
+  splitSimulationSymptoms(symptoms).notes;
 
 // ---- Pasting from a spreadsheet ----------------------------------------------
 
@@ -139,9 +196,17 @@ export const parseClipboardTable = (text: string): string[][] => {
 const normalizeHeader = (value: string) =>
   value.toLowerCase().replace(/[^a-z0-9]/g, "").replace(/s$/, "");
 
-const COLUMN_BY_HEADER = new Map(
-  SIMULATION_COLUMNS.map((column) => [normalizeHeader(column.label), column.key]),
-);
+// Pasted headings match either the default name or the name the column has been
+// given in this table.
+const columnsByHeader = (headings: readonly string[]) => {
+  const map = new Map<string, keyof SimulationRow>();
+  SIMULATION_COLUMNS.forEach((column, index) => {
+    map.set(normalizeHeader(column.label), column.key);
+    const custom = headings[index];
+    if (custom) map.set(normalizeHeader(custom), column.key);
+  });
+  return map;
+};
 
 const NUMERIC_COLUMNS: (keyof SimulationRow)[] = [
   "injectedKwh",
@@ -169,14 +234,19 @@ export type PastedTable = {
 
 // With a header row, columns are matched by name in any order and unknown ones
 // are ignored. Without one, cells fill the table from startColumn, like Excel.
-export const mapPastedTable = (cells: string[][], startColumn: number): PastedTable => {
+export const mapPastedTable = (
+  cells: string[][],
+  startColumn: number,
+  headings: readonly string[] = DEFAULT_HEADINGS,
+): PastedTable => {
+  const byHeader = columnsByHeader(headings);
   const nonBlank = cells.filter((row) => row.some((cell) => cell.trim() !== ""));
   if (nonBlank.length === 0) {
     return { rows: [], usedHeader: false, matchedColumns: [], ignoredColumns: [] };
   }
 
   const [first, ...rest] = nonBlank;
-  const headerKeys = first.map((cell) => COLUMN_BY_HEADER.get(normalizeHeader(cell)));
+  const headerKeys = first.map((cell) => byHeader.get(normalizeHeader(cell)));
   const filledHeaderCells = first.filter((cell) => cell.trim() !== "").length;
   const matchCount = headerKeys.filter(Boolean).length;
   const usedHeader = matchCount >= 2 || (matchCount >= 1 && matchCount === filledHeaderCells);
@@ -195,7 +265,7 @@ export const mapPastedTable = (cells: string[][], startColumn: number): PastedTa
   });
 
   const labelFor = (key: keyof SimulationRow) =>
-    SIMULATION_COLUMNS.find((column) => column.key === key)?.label ?? key;
+    headings[SIMULATION_COLUMNS.findIndex((column) => column.key === key)] ?? key;
 
   return {
     rows,

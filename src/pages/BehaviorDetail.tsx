@@ -28,24 +28,68 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getUnparsedSymptomEntries, parseSimulationSymptomRows } from "@/lib/simulation";
+import { DEFAULT_HEADINGS, joinSimulationSymptoms, splitSimulationSymptoms } from "@/lib/simulation";
+import { simulationHeadingsSchema, simulationRowSchema } from "@/lib/simulationSchema";
+import { SimulationTableEditor } from "@/components/forms/SimulationTableEditor";
 
 // Validation schema for behavior edit form
-const behaviorEditSchema = z.object({
-  title: z.string().trim().min(3, "Title must be at least 3 characters").max(200, "Title must be less than 200 characters"),
-  description: z.string().trim().min(10, "Description must be at least 10 characters").max(1000, "Description must be less than 1000 characters"),
-  symptoms: z.array(z.string().trim().min(1, "Symptom cannot be empty")).min(1, "At least one symptom is required"),
-  solutions: z.array(z.string().trim().min(1, "Solution cannot be empty")).min(1, "At least one solution is required"),
-});
+const behaviorEditSchema = z
+  .object({
+    title: z.string().trim().min(3, "Title must be at least 3 characters").max(200, "Title must be less than 200 characters"),
+    description: z.string().trim().min(10, "Description must be at least 10 characters").max(1000, "Description must be less than 1000 characters"),
+    simulationRows: z.array(simulationRowSchema),
+    simulationHeadings: simulationHeadingsSchema,
+    notes: z.array(z.string().trim().min(1, "Note cannot be empty")),
+    solutions: z.array(z.string().trim().min(1, "Solution cannot be empty")).min(1, "At least one solution is required"),
+  })
+  .refine((data) => data.simulationRows.length + data.notes.length > 0, {
+    message: "Add at least one simulation row or note",
+    path: ["notes"],
+  });
 
 type BehaviorEditFormData = z.infer<typeof behaviorEditSchema>;
+
+// The fields of GET /behaviors/:id that this page reads.
+interface ApiBehavior {
+  title: string;
+  description: string;
+  symptoms: string[] | string;
+  solutions: string[] | string;
+  severity?: string;
+  meter_id: number;
+  reported_by?: string;
+  created_at: string;
+  meter?: {
+    brand: string;
+    model: string;
+    meter_type_code?: string;
+    year_of_manufacture?: string;
+    connection_type?: string;
+  };
+}
+
+// The API returns symptoms and solutions either as arrays or as JSON strings.
+const asList = (value: unknown): string[] =>
+  Array.isArray(value) ? value : JSON.parse((value as string) || "[]");
+
+const toFormValues = (behavior: { title?: string; description?: string; symptoms?: unknown; solutions?: unknown }): BehaviorEditFormData => {
+  const { headings, rows, notes } = splitSimulationSymptoms(asList(behavior.symptoms));
+  return {
+    title: behavior.title || "",
+    description: behavior.description || "",
+    simulationRows: rows,
+    simulationHeadings: headings,
+    notes,
+    solutions: asList(behavior.solutions),
+  };
+};
 
 export default function BehaviorDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [behavior, setBehavior] = useState<any>(null);
+  const [behavior, setBehavior] = useState<ApiBehavior | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -57,7 +101,9 @@ export default function BehaviorDetail() {
     defaultValues: {
       title: "",
       description: "",
-      symptoms: [],
+      simulationRows: [],
+      simulationHeadings: [...DEFAULT_HEADINGS],
+      notes: [],
       solutions: [],
     },
   });
@@ -81,19 +127,7 @@ export default function BehaviorDetail() {
         setBehavior(data);
         
         // Initialize form with fetched data
-        const symptoms = Array.isArray(data.symptoms)
-          ? data.symptoms
-          : JSON.parse(data.symptoms || "[]");
-        const solutions = Array.isArray(data.solutions)
-          ? data.solutions
-          : JSON.parse(data.solutions || "[]");
-          
-        form.reset({
-          title: data.title || "",
-          description: data.description || "",
-          symptoms: symptoms,
-          solutions: solutions,
-        });
+        form.reset(toFormValues(data));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
@@ -117,29 +151,17 @@ export default function BehaviorDetail() {
 
   const confirmCancelEdit = () => {
     // Reset form to original behavior data
-    const symptoms = Array.isArray(behavior.symptoms)
-      ? behavior.symptoms
-      : JSON.parse(behavior.symptoms || "[]");
-    const solutions = Array.isArray(behavior.solutions)
-      ? behavior.solutions
-      : JSON.parse(behavior.solutions || "[]");
-      
-    form.reset({
-      title: behavior.title || "",
-      description: behavior.description || "",
-      symptoms: symptoms,
-      solutions: solutions,
-    });
+    form.reset(toFormValues(behavior));
     setIsEditing(false);
     setShowDiscardDialog(false);
   };
 
-  const addListItem = (field: "symptoms" | "solutions") => {
+  const addListItem = (field: "notes" | "solutions") => {
     const currentValues = form.getValues(field);
     form.setValue(field, [...currentValues, ""], { shouldValidate: true });
   };
 
-  const removeListItem = (field: "symptoms" | "solutions", index: number) => {
+  const removeListItem = (field: "notes" | "solutions", index: number) => {
     const currentValues = form.getValues(field);
     const newValues = currentValues.filter((_, i) => i !== index);
     form.setValue(field, newValues, { shouldValidate: true });
@@ -158,7 +180,11 @@ export default function BehaviorDetail() {
           title: data.title,
           meter_id: behavior.meter_id,
           description: data.description,
-          symptoms: data.symptoms.filter(s => s.trim() !== ""),
+          symptoms: joinSimulationSymptoms({
+            headings: data.simulationHeadings,
+            rows: data.simulationRows,
+            notes: data.notes,
+          }),
           solutions: data.solutions.filter(s => s.trim() !== ""),
           reported_by: behavior.reported_by,
         }),
@@ -168,6 +194,7 @@ export default function BehaviorDetail() {
 
       const updated = await response.json();
       setBehavior(updated);
+      form.reset(toFormValues(updated));
       setIsEditing(false);
       toast({
         title: "Success",
@@ -369,10 +396,10 @@ if (isLoading) {
   //   </Layout>
   // );
 
-  const symptoms = form.watch("symptoms");
+  const simulationRows = form.watch("simulationRows");
+  const simulationHeadings = form.watch("simulationHeadings");
+  const notes = form.watch("notes");
   const solutions = form.watch("solutions");
-  const simulationRows = parseSimulationSymptomRows(symptoms);
-  const unparsedSymptoms = getUnparsedSymptomEntries(symptoms);
 
   return (
   <Layout>
@@ -543,13 +570,9 @@ if (isLoading) {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Scenario</TableHead>
-                      <TableHead>Register</TableHead>
-                      <TableHead>Injected kWh</TableHead>
-                      <TableHead>Start Readings</TableHead>
-                      <TableHead>Stop Readings</TableHead>
-                      <TableHead>Consumption</TableHead>
-                      <TableHead>Remarks</TableHead>
+                      {simulationHeadings.map((heading, index) => (
+                        <TableHead key={index}>{heading}</TableHead>
+                      ))}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -568,9 +591,9 @@ if (isLoading) {
                 </Table>
               )}
 
-              {unparsedSymptoms.length > 0 && (
+              {notes.length > 0 && (
                 <ul className="space-y-2">
-                  {unparsedSymptoms.map((s, i) => (
+                  {notes.map((s, i) => (
                     <li key={i} className="flex gap-2">
                       <span className="text-destructive">•</span>
                       <span className="whitespace-pre-line">{s}</span>
@@ -581,43 +604,48 @@ if (isLoading) {
             </div>
           ) : (
             <Form {...form}>
-              <div className="space-y-4">
-                {symptoms.map((s, i) => (
-                  <FormField
-                    key={i}
-                    control={form.control}
-                    name={`symptoms.${i}`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex gap-3">
-                          <FormControl>
-                            <Textarea
-                              {...field}
-                              placeholder="Enter symptom..."
-                              className="min-h-[80px]"
-                            />
-                          </FormControl>
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="icon"
-                            onClick={() => removeListItem("symptoms", i)}
-                            disabled={symptoms.length <= 1}
-                          >
-                            <Minus />
-                          </Button>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                ))}
-                {form.formState.errors.symptoms?.message && (
-                  <p className="text-sm font-medium text-destructive">{form.formState.errors.symptoms.message}</p>
-                )}
-                <Button type="button" size="sm" onClick={() => addListItem("symptoms")}>
-                  <Plus className="mr-2 h-4 w-4" /> Add Symptom
-                </Button>
+              <div className="space-y-6">
+                <SimulationTableEditor allowEmpty />
+
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium">Other notes</h3>
+                  {notes.map((s, i) => (
+                    <FormField
+                      key={i}
+                      control={form.control}
+                      name={`notes.${i}`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex gap-3">
+                            <FormControl>
+                              <Textarea
+                                {...field}
+                                placeholder="Enter a note that is not a table row..."
+                                className="min-h-[80px]"
+                              />
+                            </FormControl>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              aria-label={`Remove note ${i + 1}`}
+                              onClick={() => removeListItem("notes", i)}
+                            >
+                              <Minus />
+                            </Button>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  ))}
+                  {form.formState.errors.notes?.message && (
+                    <p className="text-sm font-medium text-destructive">{form.formState.errors.notes.message}</p>
+                  )}
+                  <Button type="button" size="sm" variant="secondary" onClick={() => addListItem("notes")}>
+                    <Plus className="mr-2 h-4 w-4" /> Add Note
+                  </Button>
+                </div>
               </div>
             </Form>
           )}
