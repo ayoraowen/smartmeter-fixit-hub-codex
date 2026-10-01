@@ -29,9 +29,8 @@ const focusCell = (row: number, column: number) =>
 
 // A spreadsheet-style editor for the simulation results table. It must sit
 // inside a <Form> whose values include `simulationRows` and `simulationHeadings`.
-// With allowEmpty, the last row can be removed (used when editing a record that
-// may have no table).
-export function SimulationTableEditor({ allowEmpty = false }: { allowEmpty?: boolean }) {
+// It always keeps one row; SymptomsFields removes the table as a whole.
+export function SimulationTableEditor() {
   const form = useFormContext<SimulationForm>();
   const rows = useFieldArray({ control: form.control, name: "simulationRows" });
   const { toast } = useToast();
@@ -190,7 +189,7 @@ export function SimulationTableEditor({ allowEmpty = false }: { allowEmpty?: boo
                     className="h-9 w-9"
                     aria-label={`Remove row ${rowIndex + 1}`}
                     onClick={() => rows.remove(rowIndex)}
-                    disabled={!allowEmpty && rows.fields.length <= 1}
+                    disabled={rows.fields.length <= 1}
                   >
                     <X className="h-4 w-4" />
                   </Button>

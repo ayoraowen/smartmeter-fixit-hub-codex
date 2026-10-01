@@ -29,8 +29,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DEFAULT_HEADINGS, joinSimulationSymptoms, splitSimulationSymptoms } from "@/lib/simulation";
-import { simulationHeadingsSchema, simulationRowSchema } from "@/lib/simulationSchema";
-import { SimulationTableEditor } from "@/components/forms/SimulationTableEditor";
+import {
+  ROWS_OR_NOTES_ERROR,
+  hasRowsOrNotes,
+  simulationHeadingsSchema,
+  simulationRowSchema,
+  symptomNotesSchema,
+} from "@/lib/simulationSchema";
+import { SymptomsFields } from "@/components/forms/SymptomsFields";
 
 // Validation schema for behavior edit form
 const behaviorEditSchema = z
@@ -39,13 +45,10 @@ const behaviorEditSchema = z
     description: z.string().trim().min(10, "Description must be at least 10 characters").max(1000, "Description must be less than 1000 characters"),
     simulationRows: z.array(simulationRowSchema),
     simulationHeadings: simulationHeadingsSchema,
-    notes: z.array(z.string().trim().min(1, "Note cannot be empty")),
+    notes: symptomNotesSchema,
     solutions: z.array(z.string().trim().min(1, "Solution cannot be empty")).min(1, "At least one solution is required"),
   })
-  .refine((data) => data.simulationRows.length + data.notes.length > 0, {
-    message: "Add at least one simulation row or note",
-    path: ["notes"],
-  });
+  .refine(hasRowsOrNotes, ROWS_OR_NOTES_ERROR);
 
 type BehaviorEditFormData = z.infer<typeof behaviorEditSchema>;
 
@@ -156,12 +159,12 @@ export default function BehaviorDetail() {
     setShowDiscardDialog(false);
   };
 
-  const addListItem = (field: "notes" | "solutions") => {
+  const addListItem = (field: "solutions") => {
     const currentValues = form.getValues(field);
     form.setValue(field, [...currentValues, ""], { shouldValidate: true });
   };
 
-  const removeListItem = (field: "notes" | "solutions", index: number) => {
+  const removeListItem = (field: "solutions", index: number) => {
     const currentValues = form.getValues(field);
     const newValues = currentValues.filter((_, i) => i !== index);
     form.setValue(field, newValues, { shouldValidate: true });
@@ -604,49 +607,7 @@ if (isLoading) {
             </div>
           ) : (
             <Form {...form}>
-              <div className="space-y-6">
-                <SimulationTableEditor allowEmpty />
-
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium">Other notes</h3>
-                  {notes.map((s, i) => (
-                    <FormField
-                      key={i}
-                      control={form.control}
-                      name={`notes.${i}`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex gap-3">
-                            <FormControl>
-                              <Textarea
-                                {...field}
-                                placeholder="Enter a note that is not a table row..."
-                                className="min-h-[80px]"
-                              />
-                            </FormControl>
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="icon"
-                              aria-label={`Remove note ${i + 1}`}
-                              onClick={() => removeListItem("notes", i)}
-                            >
-                              <Minus />
-                            </Button>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                  {form.formState.errors.notes?.message && (
-                    <p className="text-sm font-medium text-destructive">{form.formState.errors.notes.message}</p>
-                  )}
-                  <Button type="button" size="sm" variant="secondary" onClick={() => addListItem("notes")}>
-                    <Plus className="mr-2 h-4 w-4" /> Add Note
-                  </Button>
-                </div>
-              </div>
+              <SymptomsFields />
             </Form>
           )}
         </Card>

@@ -12,8 +12,14 @@ import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import API_BASE_URL from "@/config/api";
 import { DEFAULT_HEADINGS, emptySimulationRow, joinSimulationSymptoms } from "@/lib/simulation";
-import { simulationHeadingsSchema, simulationRowSchema } from "@/lib/simulationSchema";
-import { SimulationTableEditor } from "./SimulationTableEditor";
+import {
+  ROWS_OR_NOTES_ERROR,
+  hasRowsOrNotes,
+  simulationHeadingsSchema,
+  simulationRowSchema,
+  symptomNotesSchema,
+} from "@/lib/simulationSchema";
+import { SymptomsFields } from "./SymptomsFields";
 
 //interface needed for fetched meters so that we can populate the meter dropdown and have proper typing
 interface ApiFetchedMeter {
@@ -29,15 +35,18 @@ interface ApiFetchedMeter {
   year_of_manufacture: string; 
 }
 
-const behaviorSchema = z.object({
-  meterId: z.string().min(1, "Please select a meter"),
-  title: z.string().min(3, "Title must be at least 3 characters").max(100),
-  description: z.string().min(10, "Description must be at least 10 characters").max(500),
-  severity: z.enum(["low", "medium", "high", "critical"]),
-  simulationRows: z.array(simulationRowSchema).min(1, "Add at least one simulation row"),
-  simulationHeadings: simulationHeadingsSchema,
-  reportedBy: z.string().max(100).optional(),
-});
+const behaviorSchema = z
+  .object({
+    meterId: z.string().min(1, "Please select a meter"),
+    title: z.string().min(3, "Title must be at least 3 characters").max(100),
+    description: z.string().min(10, "Description must be at least 10 characters").max(500),
+    severity: z.enum(["low", "medium", "high", "critical"]),
+    simulationRows: z.array(simulationRowSchema),
+    simulationHeadings: simulationHeadingsSchema,
+    notes: symptomNotesSchema,
+    reportedBy: z.string().max(100).optional(),
+  })
+  .refine(hasRowsOrNotes, ROWS_OR_NOTES_ERROR);
 
 type BehaviorFormData = z.infer<typeof behaviorSchema>;
 
@@ -93,6 +102,7 @@ export function CreateBehaviorForm() {
       severity: "medium",
       simulationRows: [emptySimulationRow()],
       simulationHeadings: [...DEFAULT_HEADINGS],
+      notes: [],
       reportedBy: "",
     },
   });
@@ -148,7 +158,7 @@ export function CreateBehaviorForm() {
             symptoms: joinSimulationSymptoms({
               headings: data.simulationHeadings,
               rows: data.simulationRows,
-              notes: [],
+              notes: data.notes,
             }),
             
             solutions: solutions,
@@ -309,7 +319,7 @@ console.log(data.meterId)
 
         <div className="space-y-2">
           <FormLabel>Symptoms/Simulation Notes</FormLabel>
-          <SimulationTableEditor />
+          <SymptomsFields />
         </div>
 
         <div className="space-y-2">

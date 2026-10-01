@@ -25,3 +25,15 @@ export const simulationRowSchema = z.object({
 export const simulationHeadingsSchema = z.array(
   z.string().trim().max(HEADING_MAX_LENGTH, `Headings can be at most ${HEADING_MAX_LENGTH} characters`),
 );
+
+// Free-text symptoms or observations that are not table rows.
+export const symptomNotesSchema = z.array(z.string().trim().min(1, "Note cannot be empty"));
+
+// The table is optional, but a behaviour needs at least one row or one note.
+// Fields are optional in the type because zod infers them so without strict mode.
+export const hasRowsOrNotes = (data: { simulationRows?: unknown[]; notes?: string[] }) =>
+  (data.simulationRows?.length ?? 0) + (data.notes?.length ?? 0) > 0;
+export const ROWS_OR_NOTES_ERROR = {
+  message: "Add a simulation table row or a note",
+  path: ["notes"],
+};
