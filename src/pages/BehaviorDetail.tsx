@@ -579,15 +579,11 @@ if (isLoading) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {simulationRows.map((row, index) => (
-                      <TableRow key={`${row.scenario}-${row.register}-${index}`}>
-                        <TableCell>{row.scenario}</TableCell>
-                        <TableCell>{row.register}</TableCell>
-                        <TableCell>{row.injectedKwh}</TableCell>
-                        <TableCell>{row.startReadings}</TableCell>
-                        <TableCell>{row.stopReadings}</TableCell>
-                        <TableCell>{row.consumption}</TableCell>
-                        <TableCell>{row.remarks}</TableCell>
+                    {simulationRows.map((row, rowIndex) => (
+                      <TableRow key={rowIndex}>
+                        {simulationHeadings.map((_, columnIndex) => (
+                          <TableCell key={columnIndex}>{row[columnIndex] ?? ""}</TableCell>
+                        ))}
                       </TableRow>
                     ))}
                   </TableBody>

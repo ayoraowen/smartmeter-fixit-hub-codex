@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { SimulationRow, emptySimulationRow } from "@/lib/simulation";
+import { SimulationRow, emptySimulationRow, rowHasData } from "@/lib/simulation";
 import { SimulationTableEditor } from "./SimulationTableEditor";
 
 type SymptomsForm = {
@@ -24,8 +24,6 @@ type SymptomsForm = {
   simulationHeadings: string[];
   notes: string[];
 };
-
-const rowHasData = (row: SimulationRow) => Object.values(row).some((value) => value.trim() !== "");
 
 // The symptoms section of a behaviour: an optional simulation table and any
 // number of free-text notes. Shared by the create form and the edit mode of the
@@ -36,6 +34,7 @@ export function SymptomsFields() {
 
   // The table is shown whenever it has rows; switching it off removes them.
   const rows = form.watch("simulationRows");
+  const headings = form.watch("simulationHeadings");
   const notes = form.watch("notes");
   const includeTable = rows.length > 0;
   const filledRows = rows.filter(rowHasData).length;
@@ -44,7 +43,7 @@ export function SymptomsFields() {
     form.setValue("simulationRows", next, { shouldDirty: true, shouldValidate: form.formState.isSubmitted });
 
   const handleTableSwitch = (checked: boolean) => {
-    if (checked) setRows([emptySimulationRow()]);
+    if (checked) setRows([emptySimulationRow(headings.length)]);
     else if (filledRows > 0) setConfirmRemoveTable(true);
     else setRows([]);
   };

@@ -1,30 +1,18 @@
 import * as z from "zod";
-import { HEADING_MAX_LENGTH, REGISTER_PATTERN, SimulationRow } from "@/lib/simulation";
+import { HEADING_MAX_LENGTH, MAX_COLUMNS } from "@/lib/simulation";
 
 // Validation for the simulation results table, shared by the create form and
-// the edit mode of the detail page. Messages do not name the column, because
-// the editor already shows each error next to the column's current heading.
+// the edit mode of the detail page. The columns are chosen by the person, so
+// cells are free text: the only rule is that a row is not completely empty.
 
-// Commas separate the fields when a row is stored as text, so values between
-// the register and the remarks cannot contain them.
-const withoutCommas = z.string().trim().refine((value) => !value.includes(","), "Cannot contain commas");
-const requiredWithoutCommas = withoutCommas.refine((value) => value.length > 0, "Required");
+export const simulationRowSchema = z
+  .array(z.string().trim())
+  .refine((row) => row.some((cell) => cell.length > 0), "Fill in at least one cell, or remove the row");
 
-// Cast because, without strict mode, zod infers every field as optional; the
-// fields below are all strings, so the output is always a full SimulationRow.
-export const simulationRowSchema = z.object({
-  scenario: z.string().trim().min(1, "Required"),
-  register: z.string().trim().regex(REGISTER_PATTERN, "Use a register code such as 1.8.0"),
-  injectedKwh: withoutCommas,
-  startReadings: requiredWithoutCommas,
-  stopReadings: requiredWithoutCommas,
-  consumption: requiredWithoutCommas,
-  remarks: z.string().trim(),
-}) as unknown as z.ZodType<SimulationRow>;
-
-export const simulationHeadingsSchema = z.array(
-  z.string().trim().max(HEADING_MAX_LENGTH, `Headings can be at most ${HEADING_MAX_LENGTH} characters`),
-);
+export const simulationHeadingsSchema = z
+  .array(z.string().trim().max(HEADING_MAX_LENGTH, `Headings can be at most ${HEADING_MAX_LENGTH} characters`))
+  .min(1, "The table needs at least one column")
+  .max(MAX_COLUMNS, `The table can have at most ${MAX_COLUMNS} columns`);
 
 // Free-text symptoms or observations that are not table rows.
 export const symptomNotesSchema = z.array(z.string().trim().min(1, "Note cannot be empty"));
